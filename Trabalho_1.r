@@ -24,8 +24,8 @@ leitura <- function(path, names){
 
     # Verificar dados faltantes
     if (dim(df[rowSums(is.na(df))>0,])[1] > 0) {
-        print(df[rowSums(is.na(df))>0,])
-        print("Existem dados NA no arquivo")
+        warning(cat(df[rowSums(is.na(df))>0,]))
+        warning(cat("Existem dados NA no arquivo"))
     }
 
     # Tratamento dos dados
@@ -69,6 +69,34 @@ df_matriculas <- leitura(path, c("municipio", "regiao", "matriculas"))
 path <- "https://gist.githubusercontent.com/jonhsp/fdaf04aa3f0962d50c54e3ccd9bee5bb/raw/96a9644ad4bc843e52831987b39c08645bf1cf4d/Profissionais%2520de%2520Saude"
 df_profissionaisSaude <- leitura(path, c("municipio", "regiao", "profissionaisS"))
 
+# 1.9) Internet Fixa
+path <-"https://gist.githubusercontent.com/jonhsp/fdbe5231146530a4a40b7cee277aadb2/raw/724edcc32e72390d2c696afaa9627712251c3f59/Banda%2520Larga%2520Fixa"
+df_internetFixa <- leitura(path, c("municipio", "regiao", "internetFixa"))
+
+# 1.10) Consumo Energia
+path <- "https://gist.githubusercontent.com/jonhsp/9926d9815a15c1fcf7a03c224009ffca/raw/8b0a3be9879b85fc61089c25524c66064f25fab7/ConsumoEnergia"
+df_energia <- leitura(path, c("municipio", "regiao", "energiaTotal", "energiaIndustria"))
+
+# 1.11) Crescimento Geométrico
+path <- "https://gist.githubusercontent.com/jonhsp/a42d460e1e92dc5792d253a41f92c56d/raw/b85b22e4707d52e6ebbe95ee5a30c61bccaa3fed/Crescimento%2520Geometrico"
+df_crescimento <- leitura(path, c("municipio", "regiao", "crescimento"))
+
+# 1.12) Densiade Demográfica
+path <- "https://gist.githubusercontent.com/jonhsp/d04e1e64bbd0017e4416f792303eae62/raw/372722f392f9762f40e511e2a5fe71f8eb464d8c/Densidade%2520Demografica"
+df_densidade <- leitura(path, c("municipio", "regiao", "densidade"))
+
+# 1.13) razão de Sexo (homens / mulheres)*100
+path <-  "https://gist.githubusercontent.com/jonhsp/ba3daf8403785506204c9abb6427f09c/raw/01500e85718103c889e718db27c4a40239ec86d6/Razao%2520de%2520Sexo"
+df_sexo <- leitura(path, c("municipio", "regiao", "sexo"))
+
+# 1.14) Distância à Capital (Km)
+path <- "https://gist.githubusercontent.com/jonhsp/ca24fe1500b9e698124b81ce891ac00c/raw/007a0fbcfee458ae9f6fa56f55ab32facbf90455/Dist%25C3%25A2ncia%2520Capital"
+df_distancia <- leitura(path, c("municipio", "regiao", "distancia"))
+df_distancia$distancia[is.na(df_distancia$distancia)] <- 0 #Curitiba
+
+# 1.15) Roubo e Furto
+path <- "https://gist.githubusercontent.com/jonhsp/86b9f07db69b91e816eff7b315ba447a/raw/dc4f35551d09abe544abccb3b9da75129b321521/Crimes%2520Tabela"
+df_crimes <- leitura(path, c("municipio", "regiao", "roubo","furto"))
 
 # 2) Junção dos dados
 dfs <- list(df_IndiceEnvelhecimento,
@@ -78,7 +106,14 @@ dfs <- list(df_IndiceEnvelhecimento,
             df_cultura,
             df_escolas,
             df_matriculas,
-            df_profissionaisSaude)
+            df_profissionaisSaude,
+            df_internetFixa,
+            df_energia,
+            df_crescimento,
+            df_densidade,
+            df_sexo,
+            df_distancia,
+            df_crimes)
 
 df <- Reduce(function(x, y) merge(x, y, by = c("municipio", "regiao")), dfs)
 
@@ -89,8 +124,17 @@ df <- df %>%
     mutate(logPopulacao = log(df_populacao$populacao)) %>%  
     relocate(logPopulacao, .after = 4) %>%
     # Ponderação das variáveis por mil habitantes
-    mutate(across(c("despesas", "equipamentosC", "escolas", "matriculas", "profissionaisS"),
-                ~ (.x / df$populacao) * 1000)) %>%
+    mutate(across(c("despesas",
+                    "equipamentosC",
+                    "escolas",
+                    "matriculas",
+                    "profissionaisS",
+                    "internetFixa",
+                    "energiaTotal",
+                    "energiaIndustria",
+                    "roubo",
+                    "furto"),
+                ~ (.x / df$populacao) * 1E5)) %>%
     # Transformação de múnicipio e região em nome das linhas
     unite("municipio_regiao", c("municipio", "regiao"), sep = "/") %>% 
     column_to_rownames("municipio_regiao")
