@@ -80,13 +80,5 @@ df$matriculasPorMHabitantes <- (df$matriculas / df$populacaoEstimada)*1000
 x11("Correlação e Distribuições")
 ggpairs(df[, -c(1,2)])
 
-# Ajuste do Modelo 
-
-ajuste <- lm(indiceEnvelhecimento ~ populacaoEstimada + graudeDeUrbanizacao , data = df)
-summary(ajuste)
-
-residualPlots(ajuste)
-influenceIndexPlot(ajuste)
-influencePlot(ajuste)
 
 
