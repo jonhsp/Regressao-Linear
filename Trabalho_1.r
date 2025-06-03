@@ -7,9 +7,9 @@ library(GGally)
 library(car)
 library(magrittr)
 
-# 1) Leitura dos dados
+##### 1) Leitura dos dados #####
 
-# Função Padrão para a leitura
+#Função Padrão para a leitura
 
 leitura <- function(path, names){ 
 
@@ -24,14 +24,14 @@ leitura <- function(path, names){
 
     # Verificar dados faltantes
     if (dim(df[rowSums(is.na(df))>0,])[1] > 0) {
-        warning(cat(df[rowSums(is.na(df))>0,]))
-        warning(cat("Existem dados NA no arquivo"))
+        print(df[rowSums(is.na(df))>0,])
+        print("Existem dados NA no arquivo")
     }
 
     # Tratamento dos dados
     for (i in 3:ncol(df)){
         df[,i] <- gsub(",",".",gsub("\\.", "", df[,i]))
-        df[,i] <- as.numeric(df[,i])
+        df[,i] <- suppressWarnings(as.numeric(df[,i]))
     }
 
     return(df)
@@ -98,7 +98,7 @@ df_distancia$distancia[is.na(df_distancia$distancia)] <- 0 #Curitiba
 path <- "https://gist.githubusercontent.com/jonhsp/86b9f07db69b91e816eff7b315ba447a/raw/dc4f35551d09abe544abccb3b9da75129b321521/Crimes%2520Tabela"
 df_crimes <- leitura(path, c("municipio", "regiao", "roubo","furto"))
 
-# 2) Junção dos dados
+#### 2) Junção dos dados ####
 dfs <- list(df_IndiceEnvelhecimento,
             df_populacao,
             df_urbanizacao,
@@ -117,7 +117,7 @@ dfs <- list(df_IndiceEnvelhecimento,
 
 df <- Reduce(function(x, y) merge(x, y, by = c("municipio", "regiao")), dfs)
 
-# 3) trasformações 
+#### 3) trasformações #### 
 
 df <- df %>%
     # Log da população
@@ -140,16 +140,20 @@ df <- df %>%
     column_to_rownames("municipio_regiao")
 
 
-# 4) Correlações
+#### 4) Correlações ####
 
-x11("Correlação e Distribuições")
+x11("GGPairs")
 ggpairs(df)
 
 
-# 5) Ajuste do Modelo de Regressão Múltipla
+x11("CorrPlot")
+corrplot(M)
+
+#### 5) Ajuste do Modelo de Regressão Múltipla ####
 
 ajuste <- lm(indiceEnvelhecimento ~ . - populacao, df)
 summary(ajuste)
 anova(ajuste)
 Anova(ajuste)
 
+rm(list = ls())
