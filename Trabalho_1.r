@@ -20,18 +20,22 @@ leitura <- function(path, names){
                     colClasses = "character")
 
     # Renomear as colunas
-    dimnames(df)[[2]] <- names
-
-    # Verificar dados faltantes
-    if (dim(df[rowSums(is.na(df))>0,])[1] > 0) {
-        print(df[rowSums(is.na(df))>0,])
-        print("Existem dados NA no arquivo")
-    }
+    colnames(df) <- names
 
     # Tratamento dos dados
     for (i in 3:ncol(df)){
         df[,i] <- gsub(",",".",gsub("\\.", "", df[,i]))
         df[,i] <- suppressWarnings(as.numeric(df[,i]))
+    }
+
+    # Verificar dados faltantes
+    if (any(is.na(df))) {
+        print(df[rowSums(is.na(df))>0,])
+        print("Existem dados NA no arquivo")
+    }
+
+    else{
+        print("Nao existem dados NA no arquivo")
     }
 
     return(df)
@@ -77,6 +81,9 @@ df_internetFixa <- leitura(path, c("municipio", "regiao", "internetFixa"))
 path <- "https://gist.githubusercontent.com/jonhsp/9926d9815a15c1fcf7a03c224009ffca/raw/8b0a3be9879b85fc61089c25524c66064f25fab7/ConsumoEnergia"
 df_energia <- leitura(path, c("municipio", "regiao", "energiaTotal", "energiaIndustria"))
 
+    # Substituição do NA por Zero
+    df_energia[df_energia$municipio == "Mato Rico","energiaIndustria"] <- 0
+
 # 1.11) Crescimento Geométrico
 path <- "https://gist.githubusercontent.com/jonhsp/a42d460e1e92dc5792d253a41f92c56d/raw/b85b22e4707d52e6ebbe95ee5a30c61bccaa3fed/Crescimento%2520Geometrico"
 df_crescimento <- leitura(path, c("municipio", "regiao", "crescimento"))
@@ -92,11 +99,19 @@ df_sexo <- leitura(path, c("municipio", "regiao", "sexo"))
 # 1.14) Distância à Capital (Km)
 path <- "https://gist.githubusercontent.com/jonhsp/ca24fe1500b9e698124b81ce891ac00c/raw/007a0fbcfee458ae9f6fa56f55ab32facbf90455/Dist%25C3%25A2ncia%2520Capital"
 df_distancia <- leitura(path, c("municipio", "regiao", "distancia"))
-df_distancia$distancia[is.na(df_distancia$distancia)] <- 0 #Curitiba
+
+    # Substituição do NA por Zero
+    df_distancia[df_distancia$municipio == "Curitiba","distancia"] <- 0
+    
 
 # 1.15) Roubo e Furto
 path <- "https://gist.githubusercontent.com/jonhsp/86b9f07db69b91e816eff7b315ba447a/raw/dc4f35551d09abe544abccb3b9da75129b321521/Crimes%2520Tabela"
 df_crimes <- leitura(path, c("municipio", "regiao", "roubo","furto"))
+
+    # Substituição do NA por Zero
+    # 33 municipios foram encontrados com NA furtos, todos com menos de 10 mil habitantes. 
+    df_crimes[is.na(df_crimes$furto),"furto"] <- 0
+
 
 #### 2) Junção dos dados ####
 dfs <- list(df_IndiceEnvelhecimento,
@@ -140,16 +155,67 @@ df <- df %>%
     column_to_rownames("municipio_regiao")
 
 
-#### 4) Correlações ####
+#### 4) Gráficos de correlação ####
 
 x11("GGPairs")
 ggpairs(df)
 
 
 x11("CorrPlot")
-corrplot(M)
+correlacoes <- cor(df, use = "pairwise.complete.obs")
+corrplot(correlacoes, method = "color")
 
-#### 5) Ajuste do Modelo de Regressão Múltipla ####
+x11("Estudo das relações | Indice de envelhecimento ~ Grau de Urbanização")
+ggplot(df, aes(x = graudeU, y = indiceEnvelhecimento)) +
+    geom_point() +
+    geom_smooth(method = "lm") +
+    geom_text(aes(x = 0.9 * max(graudeU), y = 0.9*max(indiceEnvelhecimento), 
+                  label = round(cor(df$indiceEnvelhecimento, df$graudeU, use = "pairwise.complete.obs"),2), 2), 
+              check_overlap = TRUE, vjust = 1, size = 9, col = "red")
+
+x11("Estudo das relações | Indice de envelhecimento ~ Despesas")        
+ggplot(df, aes(x = despesas, y = indiceEnvelhecimento)) +
+    geom_point() +
+    geom_smooth(method = "lm") +
+    geom_text(aes(x = 0.9 * max(despesas), y = 0.9*max(indiceEnvelhecimento), 
+                  label = round(cor(df$indiceEnvelhecimento, df$despesas, use = "pairwise.complete.obs"),2), 2), 
+              check_overlap = TRUE, vjust = 1, size = 9, col = "red")
+
+
+#### 5) Exclusões de variáveis 
+
+#### 5.1) Critério analitico ####
+
+# Cultura
+# O indicador é disttorcido em cidades com populações baixas, as cidades com 
+# maiores quantidades de equipamentos culturais por 100 mil habitantes apresentam
+# poucos equipamentos culturais.
+
+x11( title = "Estudo das relações | Indice de envelhecimento ~ Equipamentos Culturais")        
+ggplot(df, aes(x = 1/equipamentosC, y = indiceEnvelhecimento)) +
+    geom_point() +
+    geom_smooth(method = "lm") +
+    geom_text(aes(x = 0.9 * max(1/equipamentosC), y = 0.9*max(indiceEnvelhecimento), 
+                  label = round(cor(df$indiceEnvelhecimento, 1/df$equipamentosC, use = "pairwise.complete.obs"),2), 2), 
+              check_overlap = TRUE, vjust = 1, size = 9, col = "red")
+
+df_cultura %>%
+    left_join(df_populacao, by = c("municipio", "regiao")) %>%
+    mutate(equipamentosP = equipamentosC / populacao * 1E5) %>%
+    arrange(desc(equipamentosP)) %>%
+    view(title = "Equipamentos Culturais Ponderado por População")
+
+df_cultura %>%
+    arrange(desc(equipamentosC)) %>%
+    mutate(index = 1:nrow(df_cultura)) %>%
+    left_join(df_IndiceEnvelhecimento, by = c("municipio","regiao")) %>%
+    arrange(desc(indiceEnvelhecimento)) %>%
+    view(title = "Indice de Envelhecimento")
+
+#### Ajuste do modelo
+
+
+
 
 ajuste <- lm(indiceEnvelhecimento ~ . - populacao, df)
 summary(ajuste)
@@ -157,3 +223,4 @@ anova(ajuste)
 Anova(ajuste)
 
 rm(list = ls())
+
