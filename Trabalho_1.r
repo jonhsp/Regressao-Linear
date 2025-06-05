@@ -1,7 +1,8 @@
-# Bibliocas
+#### Bibliocas ####
 library(tidyverse)
 library(dplyr)
 library(ggplot2)
+library(gridExtra)
 library(corrplot)
 library(GGally)
 library(car)
@@ -103,7 +104,6 @@ df_distancia <- leitura(path, c("municipio", "regiao", "distancia"))
     # Substituição do NA por Zero
     df_distancia[df_distancia$municipio == "Curitiba","distancia"] <- 0
     
-
 # 1.15) Roubo e Furto
 path <- "https://gist.githubusercontent.com/jonhsp/86b9f07db69b91e816eff7b315ba447a/raw/dc4f35551d09abe544abccb3b9da75129b321521/Crimes%2520Tabela"
 df_crimes <- leitura(path, c("municipio", "regiao", "roubo","furto"))
@@ -111,8 +111,6 @@ df_crimes <- leitura(path, c("municipio", "regiao", "roubo","furto"))
     # Substituição do NA por Zero
     # 33 municipios foram encontrados com NA furtos, todos com menos de 10 mil habitantes. 
     df_crimes[is.na(df_crimes$furto),"furto"] <- 0
-
-
 #### 2) Junção dos dados ####
 dfs <- list(df_IndiceEnvelhecimento,
             df_populacao,
@@ -131,66 +129,206 @@ dfs <- list(df_IndiceEnvelhecimento,
             df_crimes)
 
 df <- Reduce(function(x, y) merge(x, y, by = c("municipio", "regiao")), dfs)
-
 #### 3) trasformações #### 
 
 df <- df %>%
     # Log da população
     mutate(logPopulacao = log(df_populacao$populacao)) %>%  
     relocate(logPopulacao, .after = 4) %>%
-    # Ponderação das variáveis por mil habitantes
-    mutate(across(c("despesas",
-                    "equipamentosC",
-                    "escolas",
-                    "matriculas",
-                    "profissionaisS",
-                    "internetFixa",
-                    "energiaTotal",
-                    "energiaIndustria",
-                    "roubo",
-                    "furto"),
-                ~ (.x / df$populacao) * 1E5)) %>%
     # Transformação de múnicipio e região em nome das linhas
     unite("municipio_regiao", c("municipio", "regiao"), sep = "/") %>% 
     column_to_rownames("municipio_regiao")
 
+# Função para ponderação pela quantidade de habitantes
+ponderacao <- function(data){
+    # métrica por 100.000 habitantes
+    df_ponderado <- (data/df$populacao)*1e5
+}
 
 #### 4) Gráficos de correlação ####
 
-x11("GGPairs")
-ggpairs(df)
+x11("GGPairs Parte 1 ")
+ggpairs(df[,1:9])
 
+x11("GGPairs Parte 2 ")
+ggpairs(df[,c(1,10:18)])
 
 x11("CorrPlot")
 correlacoes <- cor(df, use = "pairwise.complete.obs")
 corrplot(correlacoes, method = "color")
 
-x11("Estudo das relações | Indice de envelhecimento ~ Grau de Urbanização")
-ggplot(df, aes(x = graudeU, y = indiceEnvelhecimento)) +
-    geom_point() +
-    geom_smooth(method = "lm") +
-    geom_text(aes(x = 0.9 * max(graudeU), y = 0.9*max(indiceEnvelhecimento), 
-                  label = round(cor(df$indiceEnvelhecimento, df$graudeU, use = "pairwise.complete.obs"),2), 2), 
-              check_overlap = TRUE, vjust = 1, size = 9, col = "red")
+#### 5) Análise do indicador, correlação com a resposta e ponderações ####
 
-x11("Estudo das relações | Indice de envelhecimento ~ Despesas")        
-ggplot(df, aes(x = despesas, y = indiceEnvelhecimento)) +
-    geom_point() +
-    geom_smooth(method = "lm") +
-    geom_text(aes(x = 0.9 * max(despesas), y = 0.9*max(indiceEnvelhecimento), 
-                  label = round(cor(df$indiceEnvelhecimento, df$despesas, use = "pairwise.complete.obs"),2), 2), 
-              check_overlap = TRUE, vjust = 1, size = 9, col = "red")
+#### 5.1) População ####
 
+# Correlação do total
+c_populacao_1 <- round(cor(df$indiceEnvelhecimento, df$populacao, use = "pairwise.complete.obs"),2)
 
-#### 5) Exclusões de variáveis 
+# Correlação do log(população)
+c_populacao_2 <- round(cor(df$indiceEnvelhecimento, df$logPopulacao, use = "pairwise.complete.obs"),2)
 
-#### 5.1) Critério analitico ####
+# Dispersão do total
+x11("População")
+df %>% 
+    ggplot(aes(x = populacao, y = indiceEnvelhecimento)) +
+    geom_point(alpha = 0.5) + 
+    geom_smooth(method = "lm", col = "blue") +
+    geom_smooth(col = "red") +
+    xlab("População") +
+    ylab("Indice de Envelhecimento") +
+    ggtitle("Scaterplot do Total") +
+    annotate("text", x = 0.9 * max(df$populacao),
+                    y = 0.95 * max(df$indiceEnvelhecimento),
+                    label = paste0("Corr: ", c_populacao_1, size = 7)) -> g_populacao_1
 
-# Cultura
+# Dispersão da log populacao
+df %>% 
+    ggplot(aes(x = logPopulacao, y = indiceEnvelhecimento)) +
+    geom_point(alpha = 0.5) + 
+    geom_smooth(method = "lm", col = "blue") +
+    geom_smooth(col = "red") +
+    xlab("Log População") +
+    ylab("Indice de Envelhecimento") +
+    ggtitle("Scaterplot do Total") +
+    annotate("text", x = 0.9 * max(df$logPopulacao),
+                    y = 0.95 * max(df$indiceEnvelhecimento),
+                    label = paste0("Corr: ", c_populacao_2, size = 7)) -> g_populacao_2
+
+grid.arrange(g_populacao_1, g_populacao_2, ncol = 2)
+#### 5.2) Grau de Urbanização ####
+
+c_urbanizacao <- cor(df$indiceEnvelhecimento, df$graudeU, use = "pairwise.complete.obs")
+
+# Dispersão
+x11("Urbanização")
+df %>% 
+    ggplot(aes(x = graudeU, y = indiceEnvelhecimento)) +
+    geom_point(alpha = 0.5) + 
+    geom_smooth(method = "lm", col = "blue") +
+    geom_smooth(col = "red") +
+    xlab("Cultura") +
+    ylab("Indice de Envelhecimento") +
+    ggtitle("Scaterplot do Total") +
+    annotate("text", x = 0.9 * max(df$graudeU),
+                    y = 0.95 * max(df$indiceEnvelhecimento),
+                    label = paste0("Corr: ", round(c_urbanizacao, 2)), size = 7)
+#### 5.3) Despesas ####
+
+# Correlação do total
+c_despesas_1 <- round(cor(df$indiceEnvelhecimento, df$despesas, use = "pairwise.complete.obs"),2)
+
+# Correlação por 100.000 habitantes
+c_despesas_2 <- round(cor(df$indiceEnvelhecimento, ponderacao(df$despesas), use = "pairwise.complete.obs"),2)
+
+# Corelação do log da ponderação
+c_despesas_3 <- round(cor(df$indiceEnvelhecimento, log(ponderacao(df$despesas)), use = "pairwise.complete.obs"),2)
+
+# Dispersão do total
+x11("Despesas")
+df %>% 
+    ggplot(aes(x = despesas, y = indiceEnvelhecimento)) +
+    geom_point(alpha = 0.5) + 
+    geom_smooth(method = "lm", col = "blue") +
+    geom_smooth(col = "red") +
+    xlab("Despesas") +
+    ylab("Indice de Envelhecimento") +
+    ggtitle("Scaterplot do Total") +
+    annotate("text", x = 0.9 * max(df$despesas,na.rm = T),
+                    y = 0.95 * max(df$indiceEnvelhecimento),
+                    label = paste0("Corr: ", c_despesas_1),
+                    size = 4) -> g_despesas_1
+
+# Dispersão das despesas ponderadas
+df %>% 
+    mutate(despesas_ponderadas = ponderacao(despesas)) %>%
+    ggplot(aes(x = despesas_ponderadas, y = indiceEnvelhecimento)) +
+    geom_point(alpha = 0.5) + 
+    geom_smooth(method = "lm", col = "blue") +
+    geom_smooth(col = "red") +
+    xlab("Despesas por 100.000 habitantes") +
+    ylab("Indice de Envelhecimento") +
+    ggtitle("Scaterplot da ponderação por 100.000 habitantes") +
+    annotate("text", x = 0.9 * max(ponderacao(df$despesas),na.rm = T),
+                    y = 0.95 * max(df$indiceEnvelhecimento),
+                    label = paste0("Corr: ", c_despesas_2),
+                    size = 4) -> g_despesas_2
+
+# Dispersão do log das despesas ponderadas
+df %>% 
+    mutate(despesas_log = log(ponderacao(despesas))) %>%
+    ggplot(aes(x = despesas_log, y = indiceEnvelhecimento)) +
+    geom_point(alpha = 0.5) +
+    geom_smooth(method = "lm", col = "blue") +
+    geom_smooth(col = "red") +
+    xlab("log(Despesas por 100.000 habitantes)") +
+    ylab("Índice de Envelhecimento") +
+    ggtitle("Scaterplot do log da ponderação") +
+    annotate("text", x = 0.9 * max(log(ponderacao(df$despesas)),na.rm = T),
+                    y = 0.05 * max(df$indiceEnvelhecimento),
+                    label = paste0("Corr: ", c_despesas_3),
+                    size = 4) -> g_despesas_3
+
+grid.arrange(g_despesas_1, g_despesas_2,g_despesas_3, ncol = 3)
+
+df %>% dplyr::select(indiceEnvelhecimento, despesas) %>%
+    mutate(despesasP = ponderacao(despesas)) %>%
+    arrange(desc(despesasP)) %>%
+    View(title = "despeas")
+    
+# A ponderação por 100.000 habitantes apresentou melhor relação linear, contudo
+
+ #### 5.4) Cultura ####
+
+# Correlação do total
+c_cultura_1 <- cor(df$indiceEnvelhecimento, df$equipamentosC, use = "pairwise.complete.obs")
+
+# Correlação da ponderação
+c_cultura_2 <- cor(df$indiceEnvelhecimento, ponderacao(df$equipamentosC), use = "pairwise.complete.obs")
+
+# Dispersão do total
+x11("Cultura | Dispersão do total")
+df %>% 
+    ggplot(aes(x = equipamentosC, y = indiceEnvelhecimento)) +
+    geom_point(alpha = 0.5) + 
+    geom_smooth(method = "lm", col = "blue") +
+    geom_smooth(col = "red") +
+    xlab("Cultura") +
+    ylab("Indice de Envelhecimento") +
+    ggtitle("Scaterplot do Total") +
+    annotate("text", x = 0.9 * max(df$equipamentosC),
+                    y = 0.95 * max(df$indiceEnvelhecimento),
+                    label = paste0("Corr: ", round(c_cultura_1, 2)), size = 7) -> g_cultura_1
+
+# Dispersão da ponderação
+df %>% 
+    mutate(equipamentosC = ponderacao(equipamentosC)) %>% 
+    ggplot(aes(x = equipamentosC, y = indiceEnvelhecimento)) +
+    geom_point(alpha = 0.5) + 
+    geom_smooth(method = "lm", col = "blue") +
+    geom_smooth(col = "red") +
+    xlab("Cultura") +
+    ylab("Indice de Envelhecimento") +
+    ggtitle("Scaterplot da ponderação") +
+    annotate("text", x = 0.9 * max(ponderacao(df$equipamentosC)),
+                    y = 0.95 * max(df$indiceEnvelhecimento), 
+                    label = paste0("Corr: ", round(c_cultura_2, 2)), size = 7) -> g_cultura_2
+
+grid.arrange(g_cultura_1, g_cultura_2, ncol = 2)
+
+# Análise do indicador Ponderado
+df %>%
+    select(populacao, equipamentosC) %>%
+    mutate(equipamentosC_Ponderado = ponderacao(equipamentosC)) %>%
+    arrange(desc(equipamentosC_Ponderado)) %>%
+    View()
+
 # O indicador é disttorcido em cidades com populações baixas, as cidades com 
 # maiores quantidades de equipamentos culturais por 100 mil habitantes apresentam
 # poucos equipamentos culturais.
 
+
+##############    CONTINUAR    ############## 
+             
 x11( title = "Estudo das relações | Indice de envelhecimento ~ Equipamentos Culturais")        
 ggplot(df, aes(x = 1/equipamentosC, y = indiceEnvelhecimento)) +
     geom_point() +
@@ -212,10 +350,34 @@ df_cultura %>%
     arrange(desc(indiceEnvelhecimento)) %>%
     view(title = "Indice de Envelhecimento")
 
+df %<>% select(-equipamentosC)
+
+
+# Escolas vs Matriculas
+
+
+x11()
+df %>% 
+    ggplot(aes(x = matriculas, y = escolas)) +
+    geom_point() +
+    geom_smooth(method = "lm")
+
+
+x11()
+
+df %>%
+    select(matriculas, escolas, populacao, indiceEnvelhecimento) %>%
+    mutate(matriculasT =   (matriculas*populacao)/1e5) %>%
+    mutate(escolasT =   (escolas*populacao)/1e5) %>%
+    arrange(desc(matriculas)) %>%
+    ggplot(aes(x = matriculasT, y = escolasT)) +
+    geom_point() +
+    geom_smooth(method = "lm")
+
+
+
+
 #### Ajuste do modelo
-
-
-
 
 ajuste <- lm(indiceEnvelhecimento ~ . - populacao, df)
 summary(ajuste)
@@ -223,4 +385,3 @@ anova(ajuste)
 Anova(ajuste)
 
 rm(list = ls())
-
