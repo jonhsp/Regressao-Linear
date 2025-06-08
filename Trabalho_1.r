@@ -84,9 +84,6 @@ df_internetFixa <- leitura(path, c("municipio", "regiao", "internetFixa"))
 path <- "https://gist.githubusercontent.com/jonhsp/9926d9815a15c1fcf7a03c224009ffca/raw/8b0a3be9879b85fc61089c25524c66064f25fab7/ConsumoEnergia"
 df_energia <- leitura(path, c("municipio", "regiao", "energiaTotal", "energiaIndustria"))
 
-    # Substituição do NA por Zero
-    df_energia[df_energia$municipio == "Mato Rico","energiaIndustria"] <- 0
-
 # 1.11) Crescimento Geométrico
 path <- "https://gist.githubusercontent.com/jonhsp/a42d460e1e92dc5792d253a41f92c56d/raw/b85b22e4707d52e6ebbe95ee5a30c61bccaa3fed/Crescimento%2520Geometrico"
 df_crescimento <- leitura(path, c("municipio", "regiao", "crescimento"))
