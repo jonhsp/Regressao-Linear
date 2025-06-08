@@ -356,63 +356,217 @@ df %>%
 
 
 
- #### 5.4) Crescimento Geométrico ####
-x11("Despesas")
+#### 5.5) Crescimento Geométrico ####
+ 
+# Correlação do total
+c_crescimento_1 <- round(cor(df$indiceEnvelhecimento, df$crescimento, use = "pairwise.complete.obs"),2)
+
+# Correlação do log
+c_crescimento_2 <- round(cor(df$indiceEnvelhecimento, log(df$crescimento), use = "pairwise.complete.obs"),2)
+
+x11("Crescimento Geométrico")
 df %>% 
-    ggplot(aes(x = despesas, y = indiceEnvelhecimento)) +
+    ggplot(aes(x = crescimento, y = indiceEnvelhecimento)) +
     geom_point(alpha = 0.5) + 
     geom_smooth(method = "lm", col = "blue") +
     geom_smooth(col = "red") +
-    xlab("Despesas") +
+    xlab("Crescimento Geométrico") +
     ylab("Indice de Envelhecimento") +
     ggtitle("Scaterplot do Total") +
-    annotate("text", x = 0.9 * max(df$despesas,na.rm = T),
+    annotate("text", x = 0.9 * max(df$crescimento,na.rm = T),
                     y = 0.95 * max(df$indiceEnvelhecimento),
-                    label = paste0("Corr: ", c_despesas_1),
-                    size = 4) -> g_despesas_1
+                    label = paste0("Corr: ", c_crescimento_1),
+                    size = 4) -> g_crescimento_1
 
-# Dispersão das despesas ponderadas
+# Dispersão do crescimento ponderado
 df %>% 
-    mutate(despesas_ponderadas = ponderacao(despesas)) %>%
-    ggplot(aes(x = despesas_ponderadas, y = indiceEnvelhecimento)) +
+    mutate(crescimento_log = log(crescimento)) %>%
+    ggplot(aes(x = crescimento_log, y = indiceEnvelhecimento)) +
     geom_point(alpha = 0.5) + 
     geom_smooth(method = "lm", col = "blue") +
     geom_smooth(col = "red") +
-    xlab("Despesas por 100.000 habitantes") +
+    xlab("log(Crescimento Geométrico)") + 
     ylab("Indice de Envelhecimento") +
-    ggtitle("Scaterplot da ponderação por 100.000 habitantes") +
-    annotate("text", x = 0.9 * max(ponderacao(df$despesas),na.rm = T),
+    ggtitle("Scaterplot do log") +
+    annotate("text", x = 0.9 * max(log(df$crescimento),na.rm = T),
                     y = 0.95 * max(df$indiceEnvelhecimento),
-                    label = paste0("Corr: ", c_despesas_2),
-                    size = 4) -> g_despesas_2
+                    label = paste0("Corr: ", c_crescimento_2),
+                    size = 4) -> g_crescimento_2
 
-# Dispersão do log das despesas ponderadas
+
+
+grid.arrange(g_crescimento_1, g_crescimento_2, ncol = 2)
+
+# A curva que melhor se ajusta ao gráfico é a curva sem transformações
+
+#### 5.6) Densidade Demográfica ####
+
+# Correlação do total
+c_densidade_1 <- round(cor(df$indiceEnvelhecimento, df$densidade, use = "pairwise.complete.obs"),2)
+
+# Correlação do log
+c_densidade_2 <- round(cor(df$indiceEnvelhecimento, log(df$densidade), use = "pairwise.complete.obs"),2)
+
+x11("Densidade Demográfica")
 df %>% 
-    mutate(despesas_log = log(ponderacao(despesas))) %>%
-    ggplot(aes(x = despesas_log, y = indiceEnvelhecimento)) +
-    geom_point(alpha = 0.5) +
+    ggplot(aes(x = densidade, y = indiceEnvelhecimento)) +
+    geom_point(alpha = 0.5) + 
     geom_smooth(method = "lm", col = "blue") +
     geom_smooth(col = "red") +
-    xlab("log(Despesas por 100.000 habitantes)") +
-    ylab("Índice de Envelhecimento") +
-    ggtitle("Scaterplot do log da ponderação") +
-    annotate("text", x = 0.9 * max(log(ponderacao(df$despesas)),na.rm = T),
-                    y = 0.05 * max(df$indiceEnvelhecimento),
-                    label = paste0("Corr: ", c_despesas_3),
-                    size = 4) -> g_despesas_3
+    xlab("Densidade Demográfica") +
+    ylab("Indice de Envelhecimento") +
+    ggtitle("Scaterplot do Total") +
+    annotate("text", x = 0.9 * max(df$densidade,na.rm = T),
+                    y = 0.95 * max(df$indiceEnvelhecimento),
+                    label = paste0("Corr: ", c_densidade_1),
+                    size = 4) -> g_densidade_1
 
-grid.arrange(g_despesas_1, g_despesas_2,g_despesas_3, ncol = 3)
+df %>% 
+    ggplot(aes(x = log(densidade), y = indiceEnvelhecimento)) +
+    geom_point(alpha = 0.5) + 
+    geom_smooth(method = "lm", col = "blue") +
+    geom_smooth(col = "red") +
+    xlab("log(Densidade Demográfica)") +
+    ylab("Indice de Envelhecimento") +
+    ggtitle("Scaterplot do log") +
+    annotate("text", x = 0.9 * max(log10(df$densidade),na.rm = T),
+                    y = 0.95 * max(df$indiceEnvelhecimento),
+                    label = paste0("Corr: ", c_densidade_2),
+                    size = 4) -> g_densidade_2
 
-df %>% dplyr::select(indiceEnvelhecimento, despesas) %>%
-    mutate(despesasP = ponderacao(despesas)) %>%
-    arrange(desc(despesasP)) %>%
-    View(title = "despeas")
-    
+grid.arrange(g_densidade_1, g_densidade_2, ncol = 2)
+
+# Ambas as curvas apresentam comportamentos não lineares, a que mais se adequa é a curva do log da densidade demográfica.
+
+#### 5.7) Sexo ####
+
+# Correlação do total
+c_sexo_1 <- round(cor(df$indiceEnvelhecimento, df$sexo, use = "pairwise.complete.obs"),2)
+
+x11("Sexo")
+df %>% 
+    ggplot(aes(x = sexo, y = indiceEnvelhecimento)) +
+    geom_point(alpha = 0.5) + 
+    geom_smooth(method = "lm", col = "blue") +
+    geom_smooth(col = "red") +
+    xlab("Sexo") +
+    ylab("Indice de Envelhecimento") +
+    ggtitle("Scaterplot do Total") +
+    annotate("text", x = 0.9 * max(df$sexo,na.rm = T),
+                    y = 0.95 * max(df$indiceEnvelhecimento),
+                    label = paste0("Corr: ", c_sexo_1),
+                    size = 4) -> g_sexo_1
+
+g_sexo_1
+
+# Sexo não precisa de transformaçõoes, pois já possui relação linear com o indice de envelhecimento
+
+#### 5.8) Distância à Capital ####
+
+# Correlação do total
+c_distancia_1 <- round(cor(df$indiceEnvelhecimento, df$distancia, use = "pairwise.complete.obs"),2)
+
+x11("Distância à Capital")
+df %>% 
+    ggplot(aes(x = distancia, y = indiceEnvelhecimento)) +
+    geom_point(alpha = 0.5) + 
+    geom_smooth(method = "lm", col = "blue") +
+    geom_smooth(col = "red") +
+    xlab("Distância à Capital") +
+    ylab("Indice de Envelhecimento") +
+    ggtitle("Scaterplot do Total") +
+    annotate("text", x = 0.9 * max(df$distancia,na.rm = T),
+                    y = 0.95 * max(df$indiceEnvelhecimento),
+                    label = paste0("Corr: ", c_distancia_1),
+                    size = 4) -> g_distancia_1
+
+g_distancia_1
+
+# Distância à capital não precisa de transformações, pois já possui relação linear com o indice de envelhecimento
 
 
-ajuste <- lm(indiceEnvelhecimento ~ . - populacao, df)
-summary(ajuste)
-anova(ajuste)
-Anova(ajuste)
+#### 5.9) Roubo e Furto ####
 
-rm(list = ls())
+# Correlação entre roubo e furto
+c_roubo_furto <- round(cor(df$roubo, df$furto, use = "pairwise.complete.obs"),2)
+
+# Correlação do total
+c_roubo_1 <- round(cor(df$indiceEnvelhecimento, df$roubo, use = "pairwise.complete.obs"),2)
+c_furto_1 <- round(cor(df$indiceEnvelhecimento, df$furto, use = "pairwise.complete.obs"),2)
+
+x11("Roubo")
+df %>% 
+    ggplot(aes(x = roubo, y = furto)) +
+    geom_point(alpha = 0.5) + 
+    geom_smooth(method = "lm", col = "blue") +
+    xlab("Roubo") +
+    ylab("Furto") +
+    ggtitle("Scaterplot do Total") +
+    annotate("text", x = 0.9 * max(df$roubo,na.rm = T),
+                    y = 0.95 * max(df$furto),
+                    label = paste0("Corr: ", c_roubo_furto),
+                    size = 4) -> g_roubo_furto
+
+df %>% 
+    ggplot(aes(x = roubo, y = indiceEnvelhecimento)) +
+    geom_point(alpha = 0.5) + 
+    geom_smooth(method = "lm", col = "blue") +
+    geom_smooth(col = "red") +
+    xlab("Roubo") +
+    ylab("Indice de Envelhecimento") +
+    ggtitle("Scaterplot do Total") +
+    annotate("text", x = 0.9 * max(df$roubo,na.rm = T),
+                    y = 0.95 * max(df$indiceEnvelhecimento),
+                    label = paste0("Corr: ", c_roubo_1),
+                    size = 4) -> g_roubo_1
+
+df %>% 
+    ggplot(aes(x = furto, y = indiceEnvelhecimento)) +
+    geom_point(alpha = 0.5) + 
+    geom_smooth(method = "lm", col = "blue") +
+    geom_smooth(col = "red") +
+    xlab("Furto") +
+    ylab("Indice de Envelhecimento") +
+    ggtitle("Scaterplot do Total") +
+    annotate("text", x = 0.9 * max(df$furto,na.rm = T),
+                    y = 0.95 * max(df$indiceEnvelhecimento),
+                    label = paste0("Corr: ", c_furto_1),
+                    size = 4) -> g_furto_1
+
+grid.arrange(g_roubo_furto, g_roubo_1, g_furto_1, ncol = 3)
+
+# Correlação da ponderação
+c_roubo_2 <- round(cor(df$indiceEnvelhecimento, ponderacao(df$roubo), use = "pairwise.complete.obs"),2)
+c_furto_2 <- round(cor(df$indiceEnvelhecimento, ponderacao(df$furto), use = "pairwise.complete.obs"),2)
+
+x11("Roubo")
+df %>% 
+    ggplot(aes(x = ponderacao(roubo), y = indiceEnvelhecimento)) +
+    geom_point(alpha = 0.5) + 
+    geom_smooth(method = "lm", col = "blue") +
+    geom_smooth(col = "red") +
+    xlab("Roubo") +
+    ylab("Indice de Envelhecimento") +
+    ggtitle("Scaterplot da Ponderação") +
+    annotate("text", x = 0.9 * max(ponderacao(df$roubo),na.rm = T),
+                    y = 0.95 * max(df$indiceEnvelhecimento),
+                    label = paste0("Corr: ", c_roubo_2),
+                    size = 4) -> g_roubo_2
+
+df %>% 
+    ggplot(aes(x = ponderacao(furto), y = indiceEnvelhecimento)) +
+    geom_point(alpha = 0.5) + 
+    geom_smooth(method = "lm", col = "blue") +
+    geom_smooth(col = "red") +
+    xlab("Ponderação do Furto") +
+    ylab("Indice de Envelhecimento") +
+    ggtitle("Scaterplot da Ponderação") +
+    annotate("text", x = 0.9 * max(ponderacao(df$furto),na.rm = T),
+                    y = 0.95 * max(df$indiceEnvelhecimento),
+                    label = paste0("Corr: ", c_furto_2),
+                    size = 4) -> g_furto_2
+
+grid.arrange(g_roubo_2, g_furto_2, ncol = 2)
+
+# As duas variáveis são correlacionadas, usaremos roubo como variável explicativa, ponderada pela população
+
