@@ -396,7 +396,7 @@ df %>% dplyr::select(indiceEnvelhecimento, escolas) %>%
              
 #Escolas e Matrículas são correlacionadas, optamos por tirar Escolas por melhor ajuste ao modelo.
              
-df %>%
+df %<>%
     dplyr::select(-escolas)             
              
 #### 5.6) Matrículas ####
@@ -962,12 +962,61 @@ x11("CorrPlot")
 correlacoes <- cor(df, use = "pairwise.complete.obs")
 corrplot(correlacoes, method = "color")
 
-# 6.1) Modelo com todas as variáveis explicativas
+# 6.1) Modelos
 
-modelo <- lm(indiceEnvelhecimento ~ ., data = df)
-kable(ifelse(abs(coefficients(modelo))<0.05,"Significativo", "Não Significativo"))
+# Removendo linhas com NA
+df %<>%
+    na.omit()
+
+modelo <- lm(indiceEnvelhecimento ~ logPopulacao + 
+                                    matriculas +
+                                    profissionaisS + 
+                                    internetFixa + 
+                                    energiaIndustria + 
+                                    crescimento +
+                                    sexo + 
+                                    roubo +
+                                    distancia + 
+                                    graudeU +
+                                    despesas + 
+                                    densidade, data = df)
 summary(modelo)
+anova(modelo)
+car::Anova(modelo, type = "III")
 
-# 6.2) Seleção das variáveis explicativas
+# Proposta 1) modelo - (distancia, graudeU, despesas e densidade)
+modelo_2 <- lm(indiceEnvelhecimento ~ logPopulacao + 
+                                    matriculas +
+                                    profissionaisS + 
+                                    internetFixa + 
+                                    energiaIndustria + 
+                                    crescimento +
+                                    sexo + 
+                                    roubo, data = df)
 
-# Vamos eliminar as variáveis que não contribuem para o modelo
+AIC(modelo) - AIC(modelo_2)
+# O AIC do modelo_2 é menor que o do modelo, portanto, ele é melhor
+
+anova(modelo, modelo_2)
+# A remoção das variáveis não resultou em um aumento significativo da soma de quadrados dos resíduos
+# Portanto, o modelo 2 é melhor que o modelo completo
+
+car::Anova(modelo_2, type = "III")
+
+
+# Proposta 2) Modelo  2  - (Profissionais de Saúde e Internet Fixa)
+modelo_3 <- lm(indiceEnvelhecimento ~ logPopulacao + 
+                                    matriculas +
+                                    energiaIndustria + 
+                                    crescimento +
+                                    sexo + 
+                                    roubo, data = df)
+
+AIC(modelo) - AIC(modelo_3)
+AIC(modelo_2) - AIC(modelo_3)
+# O AIC do modelo_3 é maior que o do modelo_2 e do modelo completo, portanto, ele é pior
+
+anova(modelo, modelo_3)
+anova(modelo_2, modelo_3)
+# A remoção das variáveis resultou em um aumento significativo da soma de quadrados dos resíduos
+# Portanto, o modelo 3 é pior que o modelo 2 e o modelo completo
