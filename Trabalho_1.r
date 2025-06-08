@@ -1,4 +1,4 @@
-#### Bibliocas ####
+#### Bibliotecas ####
 library(tidyverse)
 library(dplyr)
 library(ggplot2)
@@ -7,6 +7,8 @@ library(corrplot)
 library(GGally)
 library(car)
 library(magrittr)
+library(knitr)
+library(kableExtra)
 
 ##### 1) Leitura dos dados #####
 
@@ -131,7 +133,7 @@ dfs <- list(df_IndiceEnvelhecimento,
 df <- Reduce(function(x, y) merge(x, y, by = c("municipio", "regiao")), dfs)
 #### 3) trasformações #### 
 
-df <- df %>%
+df %<>%
     # Log da população
     mutate(logPopulacao = log(df_populacao$populacao)) %>%  
     relocate(logPopulacao, .after = 4) %>%
@@ -275,7 +277,11 @@ df %>% dplyr::select(indiceEnvelhecimento, despesas) %>%
     arrange(desc(despesasP)) %>%
     View(title = "despeas")
     
-# A ponderação por 100.000 habitantes apresentou melhor relação linear, contudo
+# A ponderação por 100.000 habitantes apresentou melhor relação linear.
+
+# Trasformação
+df %<>%
+    mutate(despesas = ponderacao(despesas))
 
  #### 5.4) Cultura ####
 
@@ -662,6 +668,9 @@ grid.arrange(g_densidade_1, g_densidade_2, ncol = 2)
 
 # Ambas as curvas apresentam comportamentos não lineares, a que mais se adequa é a curva do log da densidade demográfica.
 
+# Trasformação
+df %<>% mutate(densidade = log(densidade))
+
 #### 5.13) Sexo ####
 
 # Correlação do total
@@ -794,3 +803,29 @@ grid.arrange(g_roubo_2, g_furto_2, ncol = 2)
 
 # As duas variáveis são correlacionadas, usaremos roubo como variável explicativa, ponderada pela população
 
+# Trasformação
+df %<>% mutate(roubo = ponderacao(roubo)) %>%
+    select(-furto)
+
+
+#### 6) Seleção das variáveis explicativas ####
+
+df %<>%
+    select(-populacao)
+    
+x11("GGPairs")
+ggpairs(df)
+
+x11("CorrPlot")
+correlacoes <- cor(df, use = "pairwise.complete.obs")
+corrplot(correlacoes, method = "color")
+
+# 6.1) Modelo com todas as variáveis explicativas
+
+modelo <- lm(indiceEnvelhecimento ~ ., data = df)
+kable(ifelse(abs(coefficients(modelo))<0.05,"Significativo", "Não Significativo"))
+summary(modelo)
+
+# 6.2) Seleção das variáveis explicativas
+
+# Vamos eliminar as variáveis que não contribuem para o modelo
