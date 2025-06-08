@@ -328,35 +328,259 @@ df %>%
 
 df %<>% select(-equipamentosC)
 
+#### 5.5) Escolas ####
 
-# Escolas vs Matriculas
+# Correlação do total
+c_escolas_1 <- round(cor(df$indiceEnvelhecimento, df$escolas, use = "pairwise.complete.obs"),2)
 
+# Correlação por 100.000 habitantes
+c_escolas_2 <- round(cor(df$indiceEnvelhecimento, ponderacao(df$escolas), use = "pairwise.complete.obs"),2)
 
-x11()
+# Corelação do log da ponderação
+c_escolas_3 <- round(cor(df$indiceEnvelhecimento, log(ponderacao(df$escolas)), use = "pairwise.complete.obs"),2)
+
+# Dispersão do total
+x11("Escolas | Dispersão do Total")
 df %>% 
-    ggplot(aes(x = matriculas, y = escolas)) +
-    geom_point() +
-    geom_smooth(method = "lm")
+    ggplot(aes(x = escolas, y = indiceEnvelhecimento)) +
+    geom_point(alpha = 0.5) + 
+    geom_smooth(method = "lm", col = "blue") +
+    geom_smooth(col = "red") +
+    xlab("Escolas") +
+    ylab("Indice de Envelhecimento") +
+    ggtitle("Scaterplot do Total") +
+    annotate("text", x = 0.9 * max(df$escolas,na.rm = T),
+             y = 0.95 * max(df$indiceEnvelhecimento),
+             label = paste0("Corr: ", c_escolas_1),
+             size = 4) -> g_escolas_1
 
+# Dispersão das  ponderadas
+df %>% 
+    mutate(escolas_ponderadas = ponderacao(escolas)) %>%
+    ggplot(aes(x = escolas_ponderadas, y = indiceEnvelhecimento)) +
+    geom_point(alpha = 0.5) + 
+    geom_smooth(method = "lm", col = "blue") +
+    geom_smooth(col = "red") +
+    xlab("Escolas por 100.000 habitantes") +
+    ylab("Indice de Envelhecimento") +
+    ggtitle("Scaterplot da ponderação Escolas por 100.000 habitantes") +
+    annotate("text", x = 0.9 * max(ponderacao(df$escolas),na.rm = T),
+             y = 0.95 * max(df$indiceEnvelhecimento),
+             label = paste0("Corr: ", c_escolas_2),
+             size = 4) -> g_escolas_2
 
-x11()
+# Dispersão do log das  ponderadas
+df %>% 
+    mutate(escolas_log = log(ponderacao(escolas))) %>%
+    ggplot(aes(x = escolas_log, y = indiceEnvelhecimento)) +
+    geom_point(alpha = 0.5) +
+    geom_smooth(method = "lm", col = "blue") +
+    geom_smooth(col = "red") +
+    xlab("log(Escolas) por 100.000 habitantes)") +
+    ylab("Índice de Envelhecimento") +
+    ggtitle("Scaterplot do log da ponderação") +
+    annotate("text", x = 0.9 * max(log(ponderacao(df$escolas)),na.rm = T),
+             y = 0.05 * max(df$indiceEnvelhecimento),
+             label = paste0("Corr: ", c_escolas_3),
+             size = 4) -> g_escolas_3
 
-df %>%
-    select(matriculas, escolas, populacao, indiceEnvelhecimento) %>%
-    mutate(matriculasT =   (matriculas*populacao)/1e5) %>%
-    mutate(escolasT =   (escolas*populacao)/1e5) %>%
-    arrange(desc(matriculas)) %>%
-    ggplot(aes(x = matriculasT, y = escolasT)) +
-    geom_point() +
-    geom_smooth(method = "lm")
+grid.arrange(g_escolas_1, g_escolas_2,g_escolas_3, ncol = 3)
 
+df %>% dplyr::select(indiceEnvelhecimento, escolas) %>%
+    mutate(escolasP = ponderacao(escolas)) %>%
+    arrange(desc(escolasP)) %>%
+    View(title = "Escolas")
+             
+#### 5.6) Matrículas ####
 
+# Correlação do total
+c_matriculas_1 <- round(cor(df$indiceEnvelhecimento, df$matriculas, use = "pairwise.complete.obs"),2)
 
+# Correlação por 100.000 habitantes
+c_matriculas_2 <- round(cor(df$indiceEnvelhecimento, ponderacao(df$matriculas), use = "pairwise.complete.obs"),2)
 
+# Corelação do log da ponderação
+c_matriculas_3 <- round(cor(df$indiceEnvelhecimento, log(ponderacao(df$matriculas)), use = "pairwise.complete.obs"),2)
 
+# Dispersão do total
+x11("Matriculas | Dispersão do Total")
+df %>% 
+    ggplot(aes(x = matriculas, y = indiceEnvelhecimento)) +
+    geom_point(alpha = 0.5) + 
+    geom_smooth(method = "lm", col = "blue") +
+    geom_smooth(col = "red") +
+    xlab("Matriculas") +
+    ylab("Indice de Envelhecimento") +
+    ggtitle("Scaterplot do Total") +
+    annotate("text", x = 0.9 * max(df$matriculas,na.rm = T),
+             y = 0.95 * max(df$indiceEnvelhecimento),
+             label = paste0("Corr: ", c_matriculas_1),
+             size = 4) -> g_matriculas_1
 
+# Dispersão das  ponderadas
+df %>% 
+    mutate(matriculas_ponderadas = ponderacao(matriculas)) %>%
+    ggplot(aes(x = matriculas_ponderadas, y = indiceEnvelhecimento)) +
+    geom_point(alpha = 0.5) + 
+    geom_smooth(method = "lm", col = "blue") +
+    geom_smooth(col = "red") +
+    xlab("Matriculas por 100.000 habitantes") +
+    ylab("Indice de Envelhecimento") +
+    ggtitle("Scaterplot da ponderação por 100.000 habitantes") +
+    annotate("text", x = 0.9 * max(ponderacao(df$matriculas),na.rm = T),
+             y = 0.95 * max(df$indiceEnvelhecimento),
+             label = paste0("Corr: ", c_matriculas_2),
+             size = 4) -> g_matriculas_2
 
-#### 5.5) Crescimento Geométrico ####
+# Dispersão do log das  ponderadas
+df %>% 
+    mutate(matriculas_log = log(ponderacao(matriculas))) %>%
+    ggplot(aes(x = matriculas_log, y = indiceEnvelhecimento)) +
+    geom_point(alpha = 0.5) +
+    geom_smooth(method = "lm", col = "blue") +
+    geom_smooth(col = "red") +
+    xlab("log(Matriculas por 100.000 habitantes)") +
+    ylab("Índice de Envelhecimento") +
+    ggtitle("Scaterplot do log da ponderação") +
+    annotate("text", x = 0.9 * max(log(ponderacao(df$matriculas)),na.rm = T),
+             y = 0.05 * max(df$indiceEnvelhecimento),
+             label = paste0("Corr: ", c_matriculas_3),
+             size = 4) -> g_matriculas_3
+
+grid.arrange(g_matriculas_1, g_matriculas_2,g_matriculas_3, ncol = 3)
+
+df %>% dplyr::select(indiceEnvelhecimento, matriculas) %>%
+    mutate(matriculasP = ponderacao(matriculas)) %>%
+    arrange(desc(matriculasP)) %>%
+    View(title = "Matriculas")
+             
+#### 5.7) Profissionais da Saúde ####
+
+# Correlação do total
+c_profissionaisS_1 <- round(cor(df$indiceEnvelhecimento, df$profissionaisS, use = "pairwise.complete.obs"),2)
+
+# Correlação por 100.000 habitantes
+c_profissionaisS_2 <- round(cor(df$indiceEnvelhecimento, ponderacao(df$profissionaisS), use = "pairwise.complete.obs"),2)
+
+# Corelação do log da ponderação
+c_profissionaisS_3 <- round(cor(df$indiceEnvelhecimento, log(ponderacao(df$profissionaisS)), use = "pairwise.complete.obs"),2)
+
+# Dispersão do total
+x11("Profissionais da Saúde | Dispersão do Total")
+df %>% 
+    ggplot(aes(x = profissionaisS, y = indiceEnvelhecimento)) +
+    geom_point(alpha = 0.5) + 
+    geom_smooth(method = "lm", col = "blue") +
+    geom_smooth(col = "red") +
+    xlab("Profissionais da Saúde") +
+    ylab("Indice de Envelhecimento") +
+    ggtitle("Scaterplot do Total") +
+    annotate("text", x = 0.9 * max(df$profissionaisS,na.rm = T),
+             y = 0.95 * max(df$indiceEnvelhecimento),
+             label = paste0("Corr: ", c_profissionaisS_1),
+             size = 4) -> g_profissionaisS_1
+
+# Dispersão das  ponderadas
+df %>% 
+    mutate(profissionaisS_ponderadas = ponderacao(profissionaisS)) %>%
+    ggplot(aes(x = profissionaisS_ponderadas, y = indiceEnvelhecimento)) +
+    geom_point(alpha = 0.5) + 
+    geom_smooth(method = "lm", col = "blue") +
+    geom_smooth(col = "red") +
+    xlab("Profissionais da Saúde por 100.000 habitantes") +
+    ylab("Indice de Envelhecimento") +
+    ggtitle("Scaterplot da ponderação por 100.000 habitantes") +
+    annotate("text", x = 0.9 * max(ponderacao(df$profissionaisS),na.rm = T),
+             y = 0.95 * max(df$indiceEnvelhecimento),
+             label = paste0("Corr: ", c_profissionaisS_2),
+             size = 4) -> g_profissionaisS_2
+
+# Dispersão do log das  ponderadas
+df %>% 
+    mutate(profissionaisS_log = log(ponderacao(profissionaisS))) %>%
+    ggplot(aes(x = profissionaisS_log, y = indiceEnvelhecimento)) +
+    geom_point(alpha = 0.5) +
+    geom_smooth(method = "lm", col = "blue") +
+    geom_smooth(col = "red") +
+    xlab("log(Profissionais da Saúde por 100.000 habitantes)") +
+    ylab("Índice de Envelhecimento") +
+    ggtitle("Scaterplot do log da ponderação") +
+    annotate("text", x = 0.9 * max(log(ponderacao(df$profissionaisS)),na.rm = T),
+             y = 0.05 * max(df$indiceEnvelhecimento),
+             label = paste0("Corr: ", c_profissionaisS_3),
+             size = 4) -> g_profissionaisS_3
+
+grid.arrange(g_profissionaisS_1, g_profissionaisS_2,g_profissionaisS_3, ncol = 3)
+
+df %>% dplyr::select(indiceEnvelhecimento, profissionaisS) %>%
+    mutate(profissionaisSP = ponderacao(profissionaisS)) %>%
+    arrange(desc(profissionaisSP)) %>%
+    View(title = "Profissionais da Saúde")
+
+#### 5.8) Internet Fixa ####
+             
+# Correlação do total
+c_internetFixa_1 <- round(cor(df$indiceEnvelhecimento, df$internetFixa, use = "pairwise.complete.obs"),2)
+
+# Correlação por 100.000 habitantes
+c_internetFixa_2 <- round(cor(df$indiceEnvelhecimento, ponderacao(df$internetFixa), use = "pairwise.complete.obs"),2)
+
+# Corelação do log da ponderação
+c_internetFixa_3 <- round(cor(df$indiceEnvelhecimento, log(ponderacao(df$internetFixa)), use = "pairwise.complete.obs"),2)
+
+# Dispersão do total
+x11("Internet Fixa | Dispersão do Total")
+df %>% 
+    ggplot(aes(x = internetFixa, y = indiceEnvelhecimento)) +
+    geom_point(alpha = 0.5) + 
+    geom_smooth(method = "lm", col = "blue") +
+    geom_smooth(col = "red") +
+    xlab("Internet Fixa") +
+    ylab("Indice de Envelhecimento") +
+    ggtitle("Scaterplot do Total") +
+    annotate("text", x = 0.9 * max(df$internetFixa,na.rm = T),
+             y = 0.95 * max(df$indiceEnvelhecimento),
+             label = paste0("Corr: ", c_internetFixa_1),
+             size = 4) -> g_internetFixa_1
+
+# Dispersão das  ponderadas
+df %>% 
+    mutate(internetFixa_ponderada = ponderacao(internetFixa)) %>%
+    ggplot(aes(x = internetFixa_ponderada, y = indiceEnvelhecimento)) +
+    geom_point(alpha = 0.5) + 
+    geom_smooth(method = "lm", col = "blue") +
+    geom_smooth(col = "red") +
+    xlab("Internet Fixa por 100.000 habitantes") +
+    ylab("Indice de Envelhecimento") +
+    ggtitle("Scaterplot da ponderação por 100.000 habitantes") +
+    annotate("text", x = 0.9 * max(ponderacao(df$internetFixa),na.rm = T),
+             y = 0.95 * max(df$indiceEnvelhecimento),
+             label = paste0("Corr: ", c_internetFixa_2),
+             size = 4) -> g_internetFixa_2
+
+# Dispersão do log das  ponderadas
+df %>% 
+    mutate(internetFixa_log = log(ponderacao(internetFixa))) %>%
+    ggplot(aes(x = internetFixa_log, y = indiceEnvelhecimento)) +
+    geom_point(alpha = 0.5) +
+    geom_smooth(method = "lm", col = "blue") +
+    geom_smooth(col = "red") +
+    xlab("log(Internet Fixa por 100.000 habitantes)") +
+    ylab("Índice de Envelhecimento") +
+    ggtitle("Scaterplot do log da ponderação") +
+    annotate("text", x = 0.9 * max(log(ponderacao(df$internetFixa)),na.rm = T),
+             y = 0.05 * max(df$indiceEnvelhecimento),
+             label = paste0("Corr: ", c_internetFixa_3),
+             size = 4) -> g_internetFixa_3
+
+grid.arrange(g_internetFixa_1, g_internetFixa_2,g_internetFixa_3, ncol = 3)
+
+df %>% dplyr::select(indiceEnvelhecimento, internetFixa) %>%
+    mutate(internetFixaP = ponderacao(internetFixa)) %>%
+    arrange(desc(internetFixaP)) %>%
+    View(title = "Internet Fixa")
+
+#### 5.11) Crescimento Geométrico ####
  
 # Correlação do total
 c_crescimento_1 <- round(cor(df$indiceEnvelhecimento, df$crescimento, use = "pairwise.complete.obs"),2)
@@ -399,7 +623,7 @@ grid.arrange(g_crescimento_1, g_crescimento_2, ncol = 2)
 
 # A curva que melhor se ajusta ao gráfico é a curva sem transformações
 
-#### 5.6) Densidade Demográfica ####
+#### 5.12) Densidade Demográfica ####
 
 # Correlação do total
 c_densidade_1 <- round(cor(df$indiceEnvelhecimento, df$densidade, use = "pairwise.complete.obs"),2)
@@ -438,7 +662,7 @@ grid.arrange(g_densidade_1, g_densidade_2, ncol = 2)
 
 # Ambas as curvas apresentam comportamentos não lineares, a que mais se adequa é a curva do log da densidade demográfica.
 
-#### 5.7) Sexo ####
+#### 5.13) Sexo ####
 
 # Correlação do total
 c_sexo_1 <- round(cor(df$indiceEnvelhecimento, df$sexo, use = "pairwise.complete.obs"),2)
@@ -461,7 +685,7 @@ g_sexo_1
 
 # Sexo não precisa de transformaçõoes, pois já possui relação linear com o indice de envelhecimento
 
-#### 5.8) Distância à Capital ####
+#### 5.14) Distância à Capital ####
 
 # Correlação do total
 c_distancia_1 <- round(cor(df$indiceEnvelhecimento, df$distancia, use = "pairwise.complete.obs"),2)
@@ -485,7 +709,7 @@ g_distancia_1
 # Distância à capital não precisa de transformações, pois já possui relação linear com o indice de envelhecimento
 
 
-#### 5.9) Roubo e Furto ####
+#### 5.15) Roubo e Furto ####
 
 # Correlação entre roubo e furto
 c_roubo_furto <- round(cor(df$roubo, df$furto, use = "pairwise.complete.obs"),2)
