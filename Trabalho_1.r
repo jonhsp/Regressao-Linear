@@ -397,6 +397,11 @@ df %>% dplyr::select(indiceEnvelhecimento, escolas) %>%
     arrange(desc(escolasP)) %>%
     View(title = "Escolas")
              
+#Escolas e Matrículas são correlacionadas, optamos por tirar Escolas por melhor ajuste ao modelo.
+             
+df %>%
+    dplyr::select(-escolas)             
+             
 #### 5.6) Matrículas ####
 
 # Correlação do total
@@ -459,6 +464,9 @@ df %>% dplyr::select(indiceEnvelhecimento, matriculas) %>%
     mutate(matriculasP = ponderacao(matriculas)) %>%
     arrange(desc(matriculasP)) %>%
     View(title = "Matriculas")
+
+df %<>%
+    mutate(matriculas = ponderacao(matriculas))
              
 #### 5.7) Profissionais da Saúde ####
 
@@ -523,6 +531,9 @@ df %>% dplyr::select(indiceEnvelhecimento, profissionaisS) %>%
     arrange(desc(profissionaisSP)) %>%
     View(title = "Profissionais da Saúde")
 
+df %<>%
+    mutate(profissionaisS = ponderacao(profissionaisS))
+
 #### 5.8) Internet Fixa ####
              
 # Correlação do total
@@ -585,6 +596,140 @@ df %>% dplyr::select(indiceEnvelhecimento, internetFixa) %>%
     mutate(internetFixaP = ponderacao(internetFixa)) %>%
     arrange(desc(internetFixaP)) %>%
     View(title = "Internet Fixa")
+
+df %<>%
+    mutate(internetFixa = ponderacao(internetFixa))
+
+#### 5.9) Energia Total ####
+
+# Correlação do total
+c_energiaTotal_1 <- round(cor(df$indiceEnvelhecimento, df$energiaTotal, use = "pairwise.complete.obs"),2)
+
+# Correlação por 100.000 habitantes
+c_energiaTotal_2 <- round(cor(df$indiceEnvelhecimento, ponderacao(df$energiaTotal), use = "pairwise.complete.obs"),2)
+
+# Corelação do log da ponderação
+c_energiaTotal_3 <- round(cor(df$indiceEnvelhecimento, log(ponderacao(df$energiaTotal)), use = "pairwise.complete.obs"),2)
+
+# Dispersão do total
+x11("Energia Total | Dispersão do Total")
+df %>% 
+    ggplot(aes(x = energiaTotal, y = indiceEnvelhecimento)) +
+    geom_point(alpha = 0.5) + 
+    geom_smooth(method = "lm", col = "blue") +
+    geom_smooth(col = "red") +
+    xlab("Energia Total") +
+    ylab("Indice de Envelhecimento") +
+    ggtitle("Scaterplot do Total") +
+    annotate("text", x = 0.9 * max(df$energiaTotal,na.rm = T),
+             y = 0.95 * max(df$indiceEnvelhecimento),
+             label = paste0("Corr: ", c_energiaTotal_1),
+             size = 4) -> g_energiaTotal_1
+
+# Dispersão das  ponderadas
+df %>% 
+    mutate(energiaTotal_ponderadas = ponderacao(energiaTotal)) %>%
+    ggplot(aes(x = energiaTotal_ponderadas, y = indiceEnvelhecimento)) +
+    geom_point(alpha = 0.5) + 
+    geom_smooth(method = "lm", col = "blue") +
+    geom_smooth(col = "red") +
+    xlab("Energia Total por 100.000 habitantes") +
+    ylab("Indice de Envelhecimento") +
+    ggtitle("Scaterplot da ponderação por 100.000 habitantes") +
+    annotate("text", x = 0.9 * max(ponderacao(df$energiaTotal),na.rm = T),
+             y = 0.95 * max(df$indiceEnvelhecimento),
+             label = paste0("Corr: ", c_energiaTotal_2),
+             size = 4) -> g_energiaTotal_2
+
+# Dispersão do log das  ponderadas
+df %>% 
+    mutate(energiaTotal_log = log(ponderacao(energiaTotal))) %>%
+    ggplot(aes(x = energiaTotal_log, y = indiceEnvelhecimento)) +
+    geom_point(alpha = 0.5) +
+    geom_smooth(method = "lm", col = "blue") +
+    geom_smooth(col = "red") +
+    xlab("log(Energia Total por 100.000 habitantes)") +
+    ylab("Índice de Envelhecimento") +
+    ggtitle("Scaterplot do log da ponderação") +
+    annotate("text", x = 0.9 * max(log(ponderacao(df$energiaTotal)),na.rm = T),
+             y = 0.05 * max(df$indiceEnvelhecimento),
+             label = paste0("Corr: ", c_energiaTotal_3),
+             size = 4) -> g_energiaTotal_3
+
+grid.arrange(g_energiaTotal_1, g_energiaTotal_2,g_energiaTotal_3, ncol = 3)
+
+df %>% dplyr::select(indiceEnvelhecimento, energiaTotal) %>%
+    mutate(energiaTotalP = ponderacao(energiaTotal)) %>%
+    arrange(desc(energiaTotalP)) %>%
+    View(title = "Energia Total")
+
+#### 5.10) Energia Industria ####
+
+# Correlação do total
+c_energiaIndustria_1 <- round(cor(df$indiceEnvelhecimento, df$energiaIndustria, use = "pairwise.complete.obs"),2)
+
+# Correlação por 100.000 habitantes
+c_energiaIndustria_2 <- round(cor(df$indiceEnvelhecimento, ponderacao(df$energiaIndustria), use = "pairwise.complete.obs"),2)
+
+# Corelação do log da ponderação
+c_energiaIndustria_3 <- round(cor(df$indiceEnvelhecimento, log(ponderacao(df$energiaIndustria)), use = "pairwise.complete.obs"),2)
+
+# Dispersão do total
+x11(" | Dispersão do Total")
+df %>% 
+    ggplot(aes(x = energiaIndustria, y = indiceEnvelhecimento)) +
+    geom_point(alpha = 0.5) + 
+    geom_smooth(method = "lm", col = "blue") +
+    geom_smooth(col = "red") +
+    xlab("Energia Industria") +
+    ylab("Indice de Envelhecimento") +
+    ggtitle("Scaterplot do Total") +
+    annotate("text", x = 0.9 * max(df$energiaIndustria,na.rm = T),
+             y = 0.95 * max(df$indiceEnvelhecimento),
+             label = paste0("Corr: ", c_energiaIndustria_1),
+             size = 4) -> g_energiaIndustria_1
+
+# Dispersão das  ponderadas
+df %>% 
+    mutate(energiaIndustria_ponderadas = ponderacao(energiaIndustria)) %>%
+    ggplot(aes(x = energiaIndustria_ponderadas, y = indiceEnvelhecimento)) +
+    geom_point(alpha = 0.5) + 
+    geom_smooth(method = "lm", col = "blue") +
+    geom_smooth(col = "red") +
+    xlab("Energia Industria por 100.000 habitantes") +
+    ylab("Indice de Envelhecimento") +
+    ggtitle("Scaterplot da ponderação por 100.000 habitantes") +
+    annotate("text", x = 0.9 * max(ponderacao(df$energiaIndustria),na.rm = T),
+             y = 0.95 * max(df$indiceEnvelhecimento),
+             label = paste0("Corr: ", c_energiaIndustria_2),
+             size = 4) -> g_energiaIndustria_2
+
+# Dispersão do log das  ponderadas
+df %>% 
+    mutate(energiaIndustria_log = log(ponderacao(energiaIndustria))) %>%
+    ggplot(aes(x = energiaIndustria_log, y = indiceEnvelhecimento)) +
+    geom_point(alpha = 0.5) +
+    geom_smooth(method = "lm", col = "blue") +
+    geom_smooth(col = "red") +
+    xlab("log(Energia Industria por 100.000 habitantes)") +
+    ylab("Índice de Envelhecimento") +
+    ggtitle("Scaterplot do log da ponderação") +
+    annotate("text", x = 0.9 * max(log(ponderacao(df$energiaIndustria)),na.rm = T),
+             y = 0.05 * max(df$indiceEnvelhecimento),
+             label = paste0("Corr: ", c_energiaIndustria_3),
+             size = 4) -> g_energiaIndustria_3
+
+grid.arrange(g_energiaIndustria_1, g_energiaIndustria_2,g_energiaIndustria_3, ncol = 3)
+
+df %>% dplyr::select(indiceEnvelhecimento, energiaIndustria) %>%
+    mutate(energiaIndustriaP = ponderacao(energiaIndustria)) %>%
+    arrange(desc(energiaIndustriaP)) %>%
+    View(title = "Energia Industria")
+
+# A transformação log(Gasto energético industrial por 100.000 habitantes) teve melhor ajuste
+df %<>%
+    mutate(energiaIndustria = log(ponderacao(energiaIndustria))) %>%
+    dplyr::select(-energiaTotal)
 
 #### 5.11) Crescimento Geométrico ####
  
