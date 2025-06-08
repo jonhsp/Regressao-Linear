@@ -326,30 +326,6 @@ df %>%
 # maiores quantidades de equipamentos culturais por 100 mil habitantes apresentam
 # poucos equipamentos culturais.
 
-
-##############    CONTINUAR    ############## 
-             
-x11( title = "Estudo das relações | Indice de envelhecimento ~ Equipamentos Culturais")        
-ggplot(df, aes(x = 1/equipamentosC, y = indiceEnvelhecimento)) +
-    geom_point() +
-    geom_smooth(method = "lm") +
-    geom_text(aes(x = 0.9 * max(1/equipamentosC), y = 0.9*max(indiceEnvelhecimento), 
-                  label = round(cor(df$indiceEnvelhecimento, 1/df$equipamentosC, use = "pairwise.complete.obs"),2), 2), 
-              check_overlap = TRUE, vjust = 1, size = 9, col = "red")
-
-df_cultura %>%
-    left_join(df_populacao, by = c("municipio", "regiao")) %>%
-    mutate(equipamentosP = equipamentosC / populacao * 1E5) %>%
-    arrange(desc(equipamentosP)) %>%
-    view(title = "Equipamentos Culturais Ponderado por População")
-
-df_cultura %>%
-    arrange(desc(equipamentosC)) %>%
-    mutate(index = 1:nrow(df_cultura)) %>%
-    left_join(df_IndiceEnvelhecimento, by = c("municipio","regiao")) %>%
-    arrange(desc(indiceEnvelhecimento)) %>%
-    view(title = "Indice de Envelhecimento")
-
 df %<>% select(-equipamentosC)
 
 
@@ -377,7 +353,62 @@ df %>%
 
 
 
-#### Ajuste do modelo
+
+
+
+ #### 5.4) Crescimento Geométrico ####
+x11("Despesas")
+df %>% 
+    ggplot(aes(x = despesas, y = indiceEnvelhecimento)) +
+    geom_point(alpha = 0.5) + 
+    geom_smooth(method = "lm", col = "blue") +
+    geom_smooth(col = "red") +
+    xlab("Despesas") +
+    ylab("Indice de Envelhecimento") +
+    ggtitle("Scaterplot do Total") +
+    annotate("text", x = 0.9 * max(df$despesas,na.rm = T),
+                    y = 0.95 * max(df$indiceEnvelhecimento),
+                    label = paste0("Corr: ", c_despesas_1),
+                    size = 4) -> g_despesas_1
+
+# Dispersão das despesas ponderadas
+df %>% 
+    mutate(despesas_ponderadas = ponderacao(despesas)) %>%
+    ggplot(aes(x = despesas_ponderadas, y = indiceEnvelhecimento)) +
+    geom_point(alpha = 0.5) + 
+    geom_smooth(method = "lm", col = "blue") +
+    geom_smooth(col = "red") +
+    xlab("Despesas por 100.000 habitantes") +
+    ylab("Indice de Envelhecimento") +
+    ggtitle("Scaterplot da ponderação por 100.000 habitantes") +
+    annotate("text", x = 0.9 * max(ponderacao(df$despesas),na.rm = T),
+                    y = 0.95 * max(df$indiceEnvelhecimento),
+                    label = paste0("Corr: ", c_despesas_2),
+                    size = 4) -> g_despesas_2
+
+# Dispersão do log das despesas ponderadas
+df %>% 
+    mutate(despesas_log = log(ponderacao(despesas))) %>%
+    ggplot(aes(x = despesas_log, y = indiceEnvelhecimento)) +
+    geom_point(alpha = 0.5) +
+    geom_smooth(method = "lm", col = "blue") +
+    geom_smooth(col = "red") +
+    xlab("log(Despesas por 100.000 habitantes)") +
+    ylab("Índice de Envelhecimento") +
+    ggtitle("Scaterplot do log da ponderação") +
+    annotate("text", x = 0.9 * max(log(ponderacao(df$despesas)),na.rm = T),
+                    y = 0.05 * max(df$indiceEnvelhecimento),
+                    label = paste0("Corr: ", c_despesas_3),
+                    size = 4) -> g_despesas_3
+
+grid.arrange(g_despesas_1, g_despesas_2,g_despesas_3, ncol = 3)
+
+df %>% dplyr::select(indiceEnvelhecimento, despesas) %>%
+    mutate(despesasP = ponderacao(despesas)) %>%
+    arrange(desc(despesasP)) %>%
+    View(title = "despeas")
+    
+
 
 ajuste <- lm(indiceEnvelhecimento ~ . - populacao, df)
 summary(ajuste)
