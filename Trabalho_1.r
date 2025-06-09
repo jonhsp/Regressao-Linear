@@ -1079,6 +1079,8 @@ summary(modelo_4)
 anova(modelo_4)
 car::Anova(modelo_4, type = "III")
 
+anova(modelo_1, modelo_2, modelo_3, modelo_4)
+
 df%<>%
     select(indiceEnvelhecimento,
         logPopulacao,
@@ -1097,7 +1099,7 @@ x11("CorrPlot")
 correlacoes <- cor(df, use = "pairwise.complete.obs")
 corrplot(correlacoes, method = "circle")
 
-#### Análise de Resíduos ####
+#### 7)  Análise de Resíduos ####
 
 # 1. Resíduos Padronizados
 residuos <- rstandard(modelo_4)
@@ -1127,7 +1129,7 @@ outliers <- which(abs(residuos) > 2)
 x11("Resíduos vs Variáveis Explicativas", width = 12, height = 8)
 par(mfrow = c(2, 4))
 
-variaveis <- c("logPopulacao", "matriculas", "distancia", "profissionaisS", 
+variaveis <- c("logPopulacao", "matriculas", "profissionaisS",'densidade', 
                "energiaIndustria", "crescimento", "sexo", "roubo")
 
 for (var in variaveis) {
@@ -1139,6 +1141,28 @@ for (var in variaveis) {
   # Destacar outliers
   if (length(outliers) > 0) {
     points(df[[var]][outliers], residuos[outliers], 
+           col = "red", pch = 19)
+  }
+}
+
+# 6. QQplot
+x11("QQPlot")
+qqPlot(modelo_4)
+qqPlot
+
+
+# 7. Gráficos de Valores Ajustados vs Variáveis Preditoras
+x11("Valores Ajustados vs Variáveis Preditoras", width = 12, height = 8)
+par(mfrow = c(2, 4))
+
+for (var in variaveis) {
+  plot(df[[var]], valores_ajustados, 
+       xlab = var, ylab = "Valores Ajustados",
+       main = paste("Valores Ajustados vs", var))
+  
+  # Destacar outliers
+  if (length(outliers) > 0) {
+    points(df[[var]][outliers], valores_ajustados[outliers], 
            col = "red", pch = 19)
   }
 }
