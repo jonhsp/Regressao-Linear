@@ -994,7 +994,8 @@ modelo_2 <- lm(indiceEnvelhecimento ~ logPopulacao +
                                     sexo + 
                                     roubo, data = df)
 
-AIC(modelo) - AIC(modelo_2)
+
+AIC(modelo) > AIC(modelo_2)
 # O AIC do modelo_2 é menor que o do modelo, portanto, ele é melhor
 
 anova(modelo, modelo_2)
@@ -1004,19 +1005,108 @@ anova(modelo, modelo_2)
 car::Anova(modelo_2, type = "III")
 
 
-# Proposta 2) Modelo  2  - (Profissionais de Saúde e Internet Fixa)
+# Proposta 2) Modelo  2  - internetFixa
 modelo_3 <- lm(indiceEnvelhecimento ~ logPopulacao + 
                                     matriculas +
+                                    profissionaisS + 
                                     energiaIndustria + 
                                     crescimento +
                                     sexo + 
                                     roubo, data = df)
 
-AIC(modelo) - AIC(modelo_3)
-AIC(modelo_2) - AIC(modelo_3)
-# O AIC do modelo_3 é maior que o do modelo_2 e do modelo completo, portanto, ele é pior
+AIC(modelo) > AIC(modelo_3)
+AIC(modelo_2) > AIC(modelo_3)
+BIC(modelo_2) > BIC(modelo_3)
+# O AIC do modelo_3 é menor que o Modelo Completo e maior que o Modelo_2.
 
 anova(modelo, modelo_3)
 anova(modelo_2, modelo_3)
-# A remoção das variáveis resultou em um aumento significativo da soma de quadrados dos resíduos
-# Portanto, o modelo 3 é pior que o modelo 2 e o modelo completo
+# Em relação ao modelo Completo, o modelo 3 é melhor.
+# Em relação ao modelo 2, o modelo 3 é ligeriramente pior (rejeita a 5% mas não rejeita a 1%)
+
+summary(modelo)$r.squared < summary(modelo_3)$r.squared
+summary(modelo_2)$r.squared < summary(modelo_3)$r.squared
+
+
+df %>%
+    mutate(populacao = exp(logPopulacao)) %>%
+    mutate(roubosT = (roubo*populacao)/1E5) %>%
+    select(indiceEnvelhecimento,populacao, roubosT, roubo) %>% View(title = "violencia")
+
+fivenum(df$indiceEnvelhecimento)
+mean(df$indiceEnvelhecimento)
+
+modelo_4 <- lm(indiceEnvelhecimento ~ logPopulacao + 
+                                    matriculas +
+                                    distancia +
+                                    profissionaisS + 
+                                    energiaIndustria + 
+                                    crescimento +
+                                    sexo + 
+                                    roubo, data = df)
+summary(modelo_4)
+anova(modelo, modelo_4)
+anova(modelo_2, modelo_4)
+anova(modelo_3, modelo_4)
+
+AIC(modelo) > AIC(modelo_4)
+AIC(modelo_2) > AIC(modelo_4)
+AIC(modelo_3) > AIC(modelo_4)
+
+BIC(modelo) > BIC(modelo_4)
+BIC(modelo_2) > BIC(modelo_4)
+BIC(modelo_3) > BIC(modelo_4)
+
+
+#### Análise de Resíduos ####
+
+# 1. Resíduos Padronizados
+residuos <- rstandard(modelo_4)
+valores_ajustados <- fitted(modelo_4)
+
+# 2. Gráfico de Resíduos vs Ajustados
+x11("Resíduos vs Ajustados")
+plot(valores_ajustados, residuos, 
+     xlab = "Valores Ajustados", ylab = "Resíduos Padronizados",
+     main = "Resíduos vs Valores Ajustados")
+abline(h = 0, col = "red")
+
+# 3. Identificação de Pontos Influentes (Cook's Distance)
+cooksd <- cooks.distance(modelo_4)
+limiar_cook <- 4/(nrow(df) - length(coef(modelo_4)) - 1)
+
+x11("Distância de Cook")
+plot(cooksd, pch = "*", cex = 2, 
+     main = "Pontos Influentes - Distância de Cook",
+     ylab = "Distância de Cook", xlab = "Índice")
+abline(h = limiar_cook, col = "red")
+
+# Identificar pontos influentes
+influentes <- which(cooksd > limiar_cook)
+if (length(influentes) > 0) {
+  text(x = influentes, y = cooksd[influentes], 
+       labels = names(influentes), pos = 3, col = "red")
+}
+
+# 4. Outliers (resíduos padronizados > 2)
+outliers <- which(abs(residuos) > 2)
+
+# 5. Gráficos de Resíduos vs Variáveis Explicativas
+x11("Resíduos vs Variáveis Explicativas", width = 12, height = 8)
+par(mfrow = c(2, 4))
+
+variaveis <- c("logPopulacao", "matriculas", "distancia", "profissionaisS", 
+               "energiaIndustria", "crescimento", "sexo", "roubo")
+
+for (var in variaveis) {
+  plot(df[[var]], residuos, 
+       xlab = var, ylab = "Resíduos Padronizados",
+       main = paste("Resíduos vs", var))
+  abline(h = 0, col = "red")
+  
+  # Destacar outliers
+  if (length(outliers) > 0) {
+    points(df[[var]][outliers], residuos[outliers], 
+           col = "red", pch = 19)
+  }
+}
