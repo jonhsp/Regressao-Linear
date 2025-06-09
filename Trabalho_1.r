@@ -660,6 +660,9 @@ df %>% dplyr::select(indiceEnvelhecimento, energiaTotal) %>%
     arrange(desc(energiaTotalP)) %>%
     View(title = "Energia Total")
 
+df %<>%
+    dplyr::select(-energiaTotal)
+
 #### 5.10) Energia Industria ####
 
 # Correlação do total
@@ -725,8 +728,7 @@ df %>% dplyr::select(indiceEnvelhecimento, energiaIndustria) %>%
 
 # A transformação log(Gasto energético industrial por 100.000 habitantes) teve melhor ajuste
 df %<>%
-    mutate(energiaIndustria = log(ponderacao(energiaIndustria))) %>%
-    dplyr::select(-energiaTotal)
+    mutate(energiaIndustria = log(ponderacao(energiaIndustria)))
 
 #### 5.11) Crescimento Geométrico ####
  
@@ -968,95 +970,132 @@ corrplot(correlacoes, method = "color")
 df %<>%
     na.omit()
 
-modelo <- lm(indiceEnvelhecimento ~ logPopulacao + 
-                                    matriculas +
-                                    profissionaisS + 
-                                    internetFixa + 
-                                    energiaIndustria + 
-                                    crescimento +
-                                    sexo + 
-                                    roubo +
-                                    distancia + 
-                                    graudeU +
-                                    despesas + 
-                                    densidade, data = df)
-summary(modelo)
-anova(modelo)
-car::Anova(modelo, type = "III")
+# Modelo Base, com todas as variáveis explicativas
 
-# Proposta 1) modelo - (distancia, graudeU, despesas e densidade)
-modelo_2 <- lm(indiceEnvelhecimento ~ logPopulacao + 
-                                    matriculas +
-                                    profissionaisS + 
-                                    internetFixa + 
-                                    energiaIndustria + 
-                                    crescimento +
-                                    sexo + 
-                                    roubo, data = df)
-
-
-AIC(modelo) > AIC(modelo_2)
-# O AIC do modelo_2 é menor que o do modelo, portanto, ele é melhor
-
-anova(modelo, modelo_2)
-# A remoção das variáveis não resultou em um aumento significativo da soma de quadrados dos resíduos
-# Portanto, o modelo 2 é melhor que o modelo completo
-
-car::Anova(modelo_2, type = "III")
-
-
-# Proposta 2) Modelo  2  - internetFixa
-modelo_3 <- lm(indiceEnvelhecimento ~ logPopulacao + 
-                                    matriculas +
-                                    profissionaisS + 
-                                    energiaIndustria + 
-                                    crescimento +
-                                    sexo + 
-                                    roubo, data = df)
-
-AIC(modelo) > AIC(modelo_3)
-AIC(modelo_2) > AIC(modelo_3)
-BIC(modelo_2) > BIC(modelo_3)
-# O AIC do modelo_3 é menor que o Modelo Completo e maior que o Modelo_2.
-
-anova(modelo, modelo_3)
-anova(modelo_2, modelo_3)
-# Em relação ao modelo Completo, o modelo 3 é melhor.
-# Em relação ao modelo 2, o modelo 3 é ligeriramente pior (rejeita a 5% mas não rejeita a 1%)
-
-summary(modelo)$r.squared < summary(modelo_3)$r.squared
-summary(modelo_2)$r.squared < summary(modelo_3)$r.squared
-
-
-df %>%
-    mutate(populacao = exp(logPopulacao)) %>%
-    mutate(roubosT = (roubo*populacao)/1E5) %>%
-    select(indiceEnvelhecimento,populacao, roubosT, roubo) %>% View(title = "violencia")
-
-fivenum(df$indiceEnvelhecimento)
-mean(df$indiceEnvelhecimento)
-
-modelo_4 <- lm(indiceEnvelhecimento ~ logPopulacao + 
+modelo_1 <- lm(indiceEnvelhecimento ~ logPopulacao + 
+                                    sexo +
                                     matriculas +
                                     distancia +
                                     profissionaisS + 
+                                    densidade +
                                     energiaIndustria + 
                                     crescimento +
-                                    sexo + 
-                                    roubo, data = df)
-summary(modelo_4)
-anova(modelo, modelo_4)
-anova(modelo_2, modelo_4)
-anova(modelo_3, modelo_4)
+                                    roubo +
+                                    despesas + 
+                                    graudeU +
+                                    internetFixa, data = df)
+summary(modelo_1)
+anova(modelo_1)
+car::Anova(modelo_1, type = "III")
 
-AIC(modelo) > AIC(modelo_4)
+# Proposta 2) modelo sem graudeU e Internet Fixa
+modelo_2 <- lm(indiceEnvelhecimento ~ logPopulacao + 
+                                    sexo +
+                                    matriculas +
+                                    distancia +
+                                    profissionaisS + 
+                                    densidade +
+                                    energiaIndustria + 
+                                    crescimento +
+                                    roubo +
+                                    despesas, data = df)
+
+# Comparações pelos critérios AIC e BIC
+AIC(modelo_1) > AIC(modelo_2)
+BIC(modelo_1) > BIC(modelo_2)
+# O AIC e o BIC do modelo_2 é menor que o do modelo, portanto, ele é melhor
+
+# Anova para comparação dos modelos
+anova(modelo_1, modelo_2)
+# A remoção das variáveis não resultou em um aumento significativo da soma de quadrados dos resíduos
+# Portanto, o modelo 2 é melhor que o modelo completo
+
+summary(modelo_2)
+
+# Anova para candidatos a serem removidos
+anova(modelo_2)
+car::Anova(modelo_2, type = "III")
+
+# Proposta 3) Modelo  2  - despesas
+modelo_3 <- lm(indiceEnvelhecimento ~ logPopulacao + 
+                                    sexo +
+                                    matriculas +
+                                    distancia +
+                                    profissionaisS + 
+                                    densidade +
+                                    energiaIndustria + 
+                                    crescimento +
+                                    roubo, data = df)
+# Comparações pelos critérios AIC e BIC
+AIC(modelo_1) > AIC(modelo_3)
+AIC(modelo_2) > AIC(modelo_3)
+BIC(modelo_1) > BIC(modelo_3)
+BIC(modelo_2) > BIC(modelo_3)
+# O AIC do modelo_3 é menor que o Modelo Completo e maior que o Modelo_2. Já o BIC é menor em ambos os casos.
+
+# Anova para comparação dos modelos
+anova(modelo_1, modelo_3)
+anova(modelo_2, modelo_3)
+# o modelo 3 não aumentou significativamente a SQres em comparação com os dois modelos anteriores.
+# Portanto, o modelo 3 é melhor que ambos.
+
+summary(modelo_3)
+
+# Anova para candidatos a serem removidos
+anova(modelo_3)
+car::Anova(modelo_3, type = "III")
+
+# Proposta 4) Modelo  3  - distancia
+
+modelo_4 <- lm(indiceEnvelhecimento ~ logPopulacao + 
+                                    sexo +
+                                    matriculas +
+                                    profissionaisS + 
+                                    densidade +
+                                    energiaIndustria + 
+                                    crescimento +
+                                    roubo, data = df)
+
+# Comparações pelos critérios AIC e BIC
+AIC(modelo_1) > AIC(modelo_4)
 AIC(modelo_2) > AIC(modelo_4)
 AIC(modelo_3) > AIC(modelo_4)
-
-BIC(modelo) > BIC(modelo_4)
+BIC(modelo_1) > BIC(modelo_4)
 BIC(modelo_2) > BIC(modelo_4)
 BIC(modelo_3) > BIC(modelo_4)
+# Pelo critério AIC o modelo 4 é pior que todos os anteriores, mas pelo critério BIC ele é melhor.
 
+# Anova para comparação dos modelos
+anova(modelo_1, modelo_4)
+anova(modelo_2, modelo_4)
+anova(modelo_3, modelo_4)
+# O modelo 4 não aumentou significativamente a SQres em comparação com o modelo completo, 
+# apresentou aumento do SQres em relação aos modelos 2 e 3 a 5% de significânica, mas não a 1%
+# Portanto, o modelo_4 pode ser escolhido
+
+summary(modelo_4)
+
+# Anova para candidatos a serem removidos
+anova(modelo_4)
+car::Anova(modelo_4, type = "III")
+
+df%<>%
+    select(indiceEnvelhecimento,
+        logPopulacao,
+        sexo,
+        matriculas,
+        profissionaisS,
+        densidade,
+        energiaIndustria,
+        crescimento,
+        roubo)
+
+x11("GGPairs")
+ggpairs(df)
+
+x11("CorrPlot")
+correlacoes <- cor(df, use = "pairwise.complete.obs")
+corrplot(correlacoes, method = "circle")
 
 #### Análise de Resíduos ####
 
@@ -1080,13 +1119,6 @@ plot(cooksd, pch = "*", cex = 2,
      main = "Pontos Influentes - Distância de Cook",
      ylab = "Distância de Cook", xlab = "Índice")
 abline(h = limiar_cook, col = "red")
-
-# Identificar pontos influentes
-influentes <- which(cooksd > limiar_cook)
-if (length(influentes) > 0) {
-  text(x = influentes, y = cooksd[influentes], 
-       labels = names(influentes), pos = 3, col = "red")
-}
 
 # 4. Outliers (resíduos padronizados > 2)
 outliers <- which(abs(residuos) > 2)
