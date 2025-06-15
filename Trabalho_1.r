@@ -233,28 +233,52 @@ c_populacao_2 <- round(cor(df$indiceEnvelhecimento, df$logPopulacao, use = "pair
 x11("População")
 df %>% 
     ggplot(aes(x = populacao, y = indiceEnvelhecimento)) +
-    geom_point(alpha = 0.5) + 
+    geom_point(alpha = 0.5, color = "white") + 
     geom_smooth(method = "lm", col = "blue") +
     geom_smooth(col = "red") +
     xlab("População") +
     ylab("Indice de Envelhecimento") +
-    ggtitle("Scaterplot do Total") +
+    ggtitle("População Total") +
     annotate("text", x = 0.9 * max(df$populacao),
-                    y = 0.95 * max(df$indiceEnvelhecimento),
-                    label = paste0("Corr: ", c_populacao_1, size = 7)) -> g_populacao_1
+                    y = 145,
+                    label = paste0("Corr: ", c_populacao_1, size = 7), color = "white") + 
+    theme(
+            plot.background = element_rect(fill = "#1a1a1a", color = NA),  # fundo da imagem
+            panel.background = element_rect(fill = "#1a1a1a", color = NA), # fundo do painel
+            legend.background = element_rect(fill = "#1a1a1a", color = NA),
+            legend.key = element_rect(fill = "#1a1a1a", color = NA),
+            text = element_text(color = "white"),
+            plot.title = element_text(color = "white", size = 14, face = "bold"),
+            plot.caption = element_text(color = "gray80"),
+            axis.text = element_text(color = "white"),
+            legend.text = element_text(color = "white"),
+            legend.title = element_text(color = "white")
+        )-> g_populacao_1
 
 # Dispersão da log populacao
 df %>% 
     ggplot(aes(x = logPopulacao, y = indiceEnvelhecimento)) +
-    geom_point(alpha = 0.5) + 
+    geom_point(alpha = 0.5, color = "white") + 
     geom_smooth(method = "lm", col = "blue") +
     geom_smooth(col = "red") +
     xlab("Log População") +
     ylab("Indice de Envelhecimento") +
-    ggtitle("Scaterplot do Total") +
+    ggtitle("Log da População") +
     annotate("text", x = 0.9 * max(df$logPopulacao),
-                    y = 0.95 * max(df$indiceEnvelhecimento),
-                    label = paste0("Corr: ", c_populacao_2, size = 7)) -> g_populacao_2
+                    y = 145,
+                    label = paste0("Corr: ", c_populacao_2, size = 7), color = "white") +
+    theme(
+            plot.background = element_rect(fill = "#1a1a1a", color = NA),  # fundo da imagem
+            panel.background = element_rect(fill = "#1a1a1a", color = NA), # fundo do painel
+            legend.background = element_rect(fill = "#1a1a1a", color = NA),
+            legend.key = element_rect(fill = "#1a1a1a", color = NA),
+            text = element_text(color = "white"),
+            plot.title = element_text(color = "white", size = 14, face = "bold"),
+            plot.caption = element_text(color = "gray80"),
+            axis.text = element_text(color = "white"),
+            legend.text = element_text(color = "white"),
+            legend.title = element_text(color = "white")
+        )-> g_populacao_2
 
 grid.arrange(g_populacao_1, g_populacao_2, ncol = 2)
 #### 5.2) Grau de Urbanização ####
@@ -477,48 +501,87 @@ c_matriculas_3 <- round(cor(df$indiceEnvelhecimento, log(ponderacao(df$matricula
 x11("Matriculas | Dispersão do Total")
 df %>% 
     ggplot(aes(x = matriculas, y = indiceEnvelhecimento)) +
-    geom_point(alpha = 0.5) + 
+    geom_point(alpha = 0.5, color = "white") + 
     geom_smooth(method = "lm", col = "blue") +
     geom_smooth(col = "red") +
-    xlab("Matriculas") +
-    ylab("Indice de Envelhecimento") +
-    ggtitle("Scaterplot do Total") +
+    xlab("Matrículas") +
+    ylab("Índice de Envelhecimento") +
+    ggtitle("Quantidade de Matrículas") +
     annotate("text", x = 0.9 * max(df$matriculas,na.rm = T),
              y = 0.95 * max(df$indiceEnvelhecimento),
              label = paste0("Corr: ", c_matriculas_1),
-             size = 4) -> g_matriculas_1
+             size = 4,
+             color = "white") +
+    theme(
+            plot.background = element_rect(fill = "#1a1a1a", color = NA),  # fundo da imagem
+            panel.background = element_rect(fill = "#1a1a1a", color = NA), # fundo do painel
+            legend.background = element_rect(fill = "#1a1a1a", color = NA),
+            legend.key = element_rect(fill = "#1a1a1a", color = NA),
+            text = element_text(color = "white"),
+            plot.title = element_text(color = "white", size = 14, face = "bold"),
+            plot.caption = element_text(color = "gray80"),
+            axis.text = element_text(color = "white"),
+            legend.text = element_text(color = "white"),
+            legend.title = element_text(color = "white")
+        )-> g_matriculas_1
 
 # Dispersão das  ponderadas
 df %>% 
     mutate(matriculas_ponderadas = ponderacao(matriculas)) %>%
     ggplot(aes(x = matriculas_ponderadas, y = indiceEnvelhecimento)) +
-    geom_point(alpha = 0.5) + 
+    geom_point(alpha = 0.5, color = "white") + 
     geom_smooth(method = "lm", col = "blue") +
     geom_smooth(col = "red") +
-    xlab("Matriculas por 100.000 habitantes") +
-    ylab("Indice de Envelhecimento") +
-    ggtitle("Scaterplot da ponderação por 100.000 habitantes") +
+    xlab("Matrículas por 100.000 habitantes") +
+    ylab("Índice de Envelhecimento") +
+    ggtitle("Matrículas Ponderadas") +
     annotate("text", x = 0.9 * max(ponderacao(df$matriculas),na.rm = T),
              y = 0.95 * max(df$indiceEnvelhecimento),
              label = paste0("Corr: ", c_matriculas_2),
-             size = 4) -> g_matriculas_2
+             size = 4,
+             color = "white") +
+    theme(
+            plot.background = element_rect(fill = "#1a1a1a", color = NA),  # fundo da imagem
+            panel.background = element_rect(fill = "#1a1a1a", color = NA), # fundo do painel
+            legend.background = element_rect(fill = "#1a1a1a", color = NA),
+            legend.key = element_rect(fill = "#1a1a1a", color = NA),
+            text = element_text(color = "white"),
+            plot.title = element_text(color = "white", size = 14, face = "bold"),
+            plot.caption = element_text(color = "gray80"),
+            axis.text = element_text(color = "white"),
+            legend.text = element_text(color = "white"),
+            legend.title = element_text(color = "white")
+        )-> g_matriculas_2
 
 # Dispersão do log das  ponderadas
 df %>% 
     mutate(matriculas_log = log(ponderacao(matriculas))) %>%
     ggplot(aes(x = matriculas_log, y = indiceEnvelhecimento)) +
-    geom_point(alpha = 0.5) +
+    geom_point(alpha = 0.5, color = "white") +
     geom_smooth(method = "lm", col = "blue") +
     geom_smooth(col = "red") +
-    xlab("log(Matriculas por 100.000 habitantes)") +
+    xlab("log(Matrículas por 100.000 habitantes)") +
     ylab("Índice de Envelhecimento") +
-    ggtitle("Scaterplot do log da ponderação") +
+    ggtitle("Log das Matrículas Ponderadas") +
     annotate("text", x = 0.9 * max(log(ponderacao(df$matriculas)),na.rm = T),
              y = 0.05 * max(df$indiceEnvelhecimento),
              label = paste0("Corr: ", c_matriculas_3),
-             size = 4) -> g_matriculas_3
+             size = 4,
+             color = "white") +
+    theme(
+            plot.background = element_rect(fill = "#1a1a1a", color = NA),  # fundo da imagem
+            panel.background = element_rect(fill = "#1a1a1a", color = NA), # fundo do painel
+            legend.background = element_rect(fill = "#1a1a1a", color = NA),
+            legend.key = element_rect(fill = "#1a1a1a", color = NA),
+            text = element_text(color = "white"),
+            plot.title = element_text(color = "white", size = 14, face = "bold"),
+            plot.caption = element_text(color = "gray80"),
+            axis.text = element_text(color = "white"),
+            legend.text = element_text(color = "white"),
+            legend.title = element_text(color = "white")
+        )-> g_matriculas_3
 
-grid.arrange(g_matriculas_1, g_matriculas_2,g_matriculas_3, ncol = 3)
+grid.arrange(g_matriculas_1, g_matriculas_2, ncol = 2)
 
 df %>% dplyr::select(indiceEnvelhecimento, matriculas) %>%
     mutate(matriculasP = ponderacao(matriculas)) %>%
@@ -543,37 +606,63 @@ c_profissionaisS_3 <- round(cor(df$indiceEnvelhecimento, log(ponderacao(df$profi
 x11("Profissionais da Saúde | Dispersão do Total")
 df %>% 
     ggplot(aes(x = profissionaisS, y = indiceEnvelhecimento)) +
-    geom_point(alpha = 0.5) + 
+    geom_point(alpha = 0.5, color = "white") + 
     geom_smooth(method = "lm", col = "blue") +
     geom_smooth(col = "red") +
     xlab("Profissionais da Saúde") +
     ylab("Indice de Envelhecimento") +
-    ggtitle("Scaterplot do Total") +
+    ggtitle("Quantidade de Profissionais da Saúde") +
     annotate("text", x = 0.9 * max(df$profissionaisS,na.rm = T),
              y = 0.95 * max(df$indiceEnvelhecimento),
              label = paste0("Corr: ", c_profissionaisS_1),
-             size = 4) -> g_profissionaisS_1
+             size = 4,
+             color = "white") +
+    theme(
+            plot.background = element_rect(fill = "#1a1a1a", color = NA),  # fundo da imagem
+            panel.background = element_rect(fill = "#1a1a1a", color = NA), # fundo do painel
+            legend.background = element_rect(fill = "#1a1a1a", color = NA),
+            legend.key = element_rect(fill = "#1a1a1a", color = NA),
+            text = element_text(color = "white"),
+            plot.title = element_text(color = "white", size = 14, face = "bold"),
+            plot.caption = element_text(color = "gray80"),
+            axis.text = element_text(color = "white"),
+            legend.text = element_text(color = "white"),
+            legend.title = element_text(color = "white")
+        )-> g_profissionaisS_1
 
 # Dispersão das  ponderadas
 df %>% 
     mutate(profissionaisS_ponderadas = ponderacao(profissionaisS)) %>%
     ggplot(aes(x = profissionaisS_ponderadas, y = indiceEnvelhecimento)) +
-    geom_point(alpha = 0.5) + 
+    geom_point(alpha = 0.5, color = "white") + 
     geom_smooth(method = "lm", col = "blue") +
     geom_smooth(col = "red") +
     xlab("Profissionais da Saúde por 100.000 habitantes") +
     ylab("Indice de Envelhecimento") +
-    ggtitle("Scaterplot da ponderação por 100.000 habitantes") +
+    ggtitle("Quantidade Ponderada de Profissionais") +
     annotate("text", x = 0.9 * max(ponderacao(df$profissionaisS),na.rm = T),
              y = 0.95 * max(df$indiceEnvelhecimento),
              label = paste0("Corr: ", c_profissionaisS_2),
-             size = 4) -> g_profissionaisS_2
+             size = 4,
+             color = "white") +
+    theme(
+            plot.background = element_rect(fill = "#1a1a1a", color = NA),  # fundo da imagem
+            panel.background = element_rect(fill = "#1a1a1a", color = NA), # fundo do painel
+            legend.background = element_rect(fill = "#1a1a1a", color = NA),
+            legend.key = element_rect(fill = "#1a1a1a", color = NA),
+            text = element_text(color = "white"),
+            plot.title = element_text(color = "white", size = 14, face = "bold"),
+            plot.caption = element_text(color = "gray80"),
+            axis.text = element_text(color = "white"),
+            legend.text = element_text(color = "white"),
+            legend.title = element_text(color = "white")
+        )-> g_profissionaisS_2
 
 # Dispersão do log das  ponderadas
 df %>% 
     mutate(profissionaisS_log = log(ponderacao(profissionaisS))) %>%
     ggplot(aes(x = profissionaisS_log, y = indiceEnvelhecimento)) +
-    geom_point(alpha = 0.5) +
+    geom_point(alpha = 0.5, color = "white") +
     geom_smooth(method = "lm", col = "blue") +
     geom_smooth(col = "red") +
     xlab("log(Profissionais da Saúde por 100.000 habitantes)") +
@@ -582,9 +671,22 @@ df %>%
     annotate("text", x = 0.9 * max(log(ponderacao(df$profissionaisS)),na.rm = T),
              y = 0.05 * max(df$indiceEnvelhecimento),
              label = paste0("Corr: ", c_profissionaisS_3),
-             size = 4) -> g_profissionaisS_3
+             size = 4,
+             color = "white") +
+    theme(
+            plot.background = element_rect(fill = "#1a1a1a", color = NA),  # fundo da imagem
+            panel.background = element_rect(fill = "#1a1a1a", color = NA), # fundo do painel
+            legend.background = element_rect(fill = "#1a1a1a", color = NA),
+            legend.key = element_rect(fill = "#1a1a1a", color = NA),
+            text = element_text(color = "white"),
+            plot.title = element_text(color = "white", size = 14, face = "bold"),
+            plot.caption = element_text(color = "gray80"),
+            axis.text = element_text(color = "white"),
+            legend.text = element_text(color = "white"),
+            legend.title = element_text(color = "white")
+        )-> g_profissionaisS_3
 
-grid.arrange(g_profissionaisS_1, g_profissionaisS_2,g_profissionaisS_3, ncol = 3)
+grid.arrange(g_profissionaisS_1, g_profissionaisS_2, ncol = 2)
 
 df %>% dplyr::select(indiceEnvelhecimento, profissionaisS) %>%
     mutate(profissionaisSP = ponderacao(profissionaisS)) %>%
@@ -804,35 +906,31 @@ c_crescimento_2 <- round(cor(df$indiceEnvelhecimento, log(df$crescimento), use =
 x11("Crescimento Geométrico")
 df %>% 
     ggplot(aes(x = crescimento, y = indiceEnvelhecimento)) +
-    geom_point(alpha = 0.5) + 
+    geom_point(alpha = 0.5, color = "white") + 
     geom_smooth(method = "lm", col = "blue") +
     geom_smooth(col = "red") +
     xlab("Crescimento Geométrico") +
     ylab("Indice de Envelhecimento") +
-    ggtitle("Scaterplot do Total") +
+    ggtitle("Crescimento Geométrico") +
     annotate("text", x = 0.9 * max(df$crescimento,na.rm = T),
                     y = 0.95 * max(df$indiceEnvelhecimento),
                     label = paste0("Corr: ", c_crescimento_1),
-                    size = 4) -> g_crescimento_1
+                    size = 4,
+                    color = "white") +
+    theme(
+            plot.background = element_rect(fill = "#1a1a1a", color = NA),  # fundo da imagem
+            panel.background = element_rect(fill = "#1a1a1a", color = NA), # fundo do painel
+            legend.background = element_rect(fill = "#1a1a1a", color = NA),
+            legend.key = element_rect(fill = "#1a1a1a", color = NA),
+            text = element_text(color = "white"),
+            plot.title = element_text(color = "white", size = 14, face = "bold"),
+            plot.caption = element_text(color = "gray80"),
+            axis.text = element_text(color = "white"),
+            legend.text = element_text(color = "white"),
+            legend.title = element_text(color = "white")
+        ) -> g_crescimento_1
 
-# Dispersão do crescimento ponderado
-df %>% 
-    mutate(crescimento_log = log(crescimento)) %>%
-    ggplot(aes(x = crescimento_log, y = indiceEnvelhecimento)) +
-    geom_point(alpha = 0.5) + 
-    geom_smooth(method = "lm", col = "blue") +
-    geom_smooth(col = "red") +
-    xlab("log(Crescimento Geométrico)") + 
-    ylab("Indice de Envelhecimento") +
-    ggtitle("Scaterplot do log") +
-    annotate("text", x = 0.9 * max(log(df$crescimento),na.rm = T),
-                    y = 0.95 * max(df$indiceEnvelhecimento),
-                    label = paste0("Corr: ", c_crescimento_2),
-                    size = 4) -> g_crescimento_2
-
-
-
-grid.arrange(g_crescimento_1, g_crescimento_2, ncol = 2)
+g_crescimento_1
 
 # A curva que melhor se ajusta ao gráfico é a curva sem transformações
 
@@ -847,29 +945,55 @@ c_densidade_2 <- round(cor(df$indiceEnvelhecimento, log(df$densidade), use = "pa
 x11("Densidade Demográfica")
 df %>% 
     ggplot(aes(x = densidade, y = indiceEnvelhecimento)) +
-    geom_point(alpha = 0.5) + 
+    geom_point(alpha = 0.5, color = "white") + 
     geom_smooth(method = "lm", col = "blue") +
     geom_smooth(col = "red") +
     xlab("Densidade Demográfica") +
     ylab("Indice de Envelhecimento") +
-    ggtitle("Scaterplot do Total") +
+    ggtitle("Densidade Demográfica") +
     annotate("text", x = 0.9 * max(df$densidade,na.rm = T),
                     y = 0.95 * max(df$indiceEnvelhecimento),
                     label = paste0("Corr: ", c_densidade_1),
-                    size = 4) -> g_densidade_1
+                    size = 4,
+                    color = "white") +
+    theme(
+            plot.background = element_rect(fill = "#1a1a1a", color = NA),  # fundo da imagem
+            panel.background = element_rect(fill = "#1a1a1a", color = NA), # fundo do painel
+            legend.background = element_rect(fill = "#1a1a1a", color = NA),
+            legend.key = element_rect(fill = "#1a1a1a", color = NA),
+            text = element_text(color = "white"),
+            plot.title = element_text(color = "white", size = 14, face = "bold"),
+            plot.caption = element_text(color = "gray80"),
+            axis.text = element_text(color = "white"),
+            legend.text = element_text(color = "white"),
+            legend.title = element_text(color = "white")
+        )-> g_densidade_1
 
 df %>% 
     ggplot(aes(x = log(densidade), y = indiceEnvelhecimento)) +
-    geom_point(alpha = 0.5) + 
+    geom_point(alpha = 0.5, color = "white") + 
     geom_smooth(method = "lm", col = "blue") +
     geom_smooth(col = "red") +
     xlab("log(Densidade Demográfica)") +
     ylab("Indice de Envelhecimento") +
-    ggtitle("Scaterplot do log") +
+    ggtitle("Log da Densidade Demográfica") +
     annotate("text", x = 0.9 * max(log10(df$densidade),na.rm = T),
                     y = 0.95 * max(df$indiceEnvelhecimento),
                     label = paste0("Corr: ", c_densidade_2),
-                    size = 4) -> g_densidade_2
+                    size = 4,
+                    color = "white") +
+    theme(
+            plot.background = element_rect(fill = "#1a1a1a", color = NA),  # fundo da imagem
+            panel.background = element_rect(fill = "#1a1a1a", color = NA), # fundo do painel
+            legend.background = element_rect(fill = "#1a1a1a", color = NA),
+            legend.key = element_rect(fill = "#1a1a1a", color = NA),
+            text = element_text(color = "white"),
+            plot.title = element_text(color = "white", size = 14, face = "bold"),
+            plot.caption = element_text(color = "gray80"),
+            axis.text = element_text(color = "white"),
+            legend.text = element_text(color = "white"),
+            legend.title = element_text(color = "white")
+        )-> g_densidade_2
 
 grid.arrange(g_densidade_1, g_densidade_2, ncol = 2)
 
@@ -886,16 +1010,29 @@ c_sexo_1 <- round(cor(df$indiceEnvelhecimento, df$sexo, use = "pairwise.complete
 x11("Sexo")
 df %>% 
     ggplot(aes(x = sexo, y = indiceEnvelhecimento)) +
-    geom_point(alpha = 0.5) + 
+    geom_point(alpha = 0.5, color = "white") + 
     geom_smooth(method = "lm", col = "blue") +
     geom_smooth(col = "red") +
-    xlab("Sexo") +
+    xlab("Porporção de Homens") +
     ylab("Indice de Envelhecimento") +
-    ggtitle("Scaterplot do Total") +
-    annotate("text", x = 0.9 * max(df$sexo,na.rm = T),
+    ggtitle("Porporção de Homens") +
+    annotate("text", x = 0.99 * max(df$sexo,na.rm = T),
                     y = 0.95 * max(df$indiceEnvelhecimento),
                     label = paste0("Corr: ", c_sexo_1),
-                    size = 4) -> g_sexo_1
+                    size = 4,
+                    color = "white") +
+    theme(
+            plot.background = element_rect(fill = "#1a1a1a", color = NA),  # fundo da imagem
+            panel.background = element_rect(fill = "#1a1a1a", color = NA), # fundo do painel
+            legend.background = element_rect(fill = "#1a1a1a", color = NA),
+            legend.key = element_rect(fill = "#1a1a1a", color = NA),
+            text = element_text(color = "white"),
+            plot.title = element_text(color = "white", size = 14, face = "bold"),
+            plot.caption = element_text(color = "gray80"),
+            axis.text = element_text(color = "white"),
+            legend.text = element_text(color = "white"),
+            legend.title = element_text(color = "white")
+        ) -> g_sexo_1
 
 g_sexo_1
 
@@ -949,16 +1086,29 @@ df %>%
 
 df %>% 
     ggplot(aes(x = roubo, y = indiceEnvelhecimento)) +
-    geom_point(alpha = 0.5) + 
+    geom_point(alpha = 0.5, color = "white") + 
     geom_smooth(method = "lm", col = "blue") +
     geom_smooth(col = "red") +
     xlab("Roubo") +
     ylab("Indice de Envelhecimento") +
-    ggtitle("Scaterplot do Total") +
+    ggtitle("Quantidade de Roubos") +
     annotate("text", x = 0.9 * max(df$roubo,na.rm = T),
                     y = 0.95 * max(df$indiceEnvelhecimento),
                     label = paste0("Corr: ", c_roubo_1),
-                    size = 4) -> g_roubo_1
+                    size = 4,
+                    color = "white") +
+    theme(
+            plot.background = element_rect(fill = "#1a1a1a", color = NA),  # fundo da imagem
+            panel.background = element_rect(fill = "#1a1a1a", color = NA), # fundo do painel
+            legend.background = element_rect(fill = "#1a1a1a", color = NA),
+            legend.key = element_rect(fill = "#1a1a1a", color = NA),
+            text = element_text(color = "white"),
+            plot.title = element_text(color = "white", size = 14, face = "bold"),
+            plot.caption = element_text(color = "gray80"),
+            axis.text = element_text(color = "white"),
+            legend.text = element_text(color = "white"),
+            legend.title = element_text(color = "white")
+        ) -> g_roubo_1
 
 df %>% 
     ggplot(aes(x = furto, y = indiceEnvelhecimento)) +
@@ -982,20 +1132,33 @@ c_furto_2 <- round(cor(df$indiceEnvelhecimento, ponderacao(df$furto), use = "pai
 x11("Roubo")
 df %>% 
     ggplot(aes(x = ponderacao(roubo), y = indiceEnvelhecimento)) +
-    geom_point(alpha = 0.5) + 
+    geom_point(alpha = 0.5, color = "white") + 
     geom_smooth(method = "lm", col = "blue") +
     geom_smooth(col = "red") +
     xlab("Roubo") +
     ylab("Indice de Envelhecimento") +
-    ggtitle("Scaterplot da Ponderação") +
+    ggtitle("Quantidade Ponderada de Roubos") +
     annotate("text", x = 0.9 * max(ponderacao(df$roubo),na.rm = T),
                     y = 0.95 * max(df$indiceEnvelhecimento),
                     label = paste0("Corr: ", c_roubo_2),
-                    size = 4) -> g_roubo_2
+                    size = 4,
+                    color = "white") +
+    theme(
+            plot.background = element_rect(fill = "#1a1a1a", color = NA),  # fundo da imagem
+            panel.background = element_rect(fill = "#1a1a1a", color = NA), # fundo do painel
+            legend.background = element_rect(fill = "#1a1a1a", color = NA),
+            legend.key = element_rect(fill = "#1a1a1a", color = NA),
+            text = element_text(color = "white"),
+            plot.title = element_text(color = "white", size = 14, face = "bold"),
+            plot.caption = element_text(color = "gray80"),
+            axis.text = element_text(color = "white"),
+            legend.text = element_text(color = "white"),
+            legend.title = element_text(color = "white")
+        ) -> g_roubo_2
 
 df %>% 
     ggplot(aes(x = ponderacao(furto), y = indiceEnvelhecimento)) +
-    geom_point(alpha = 0.5) + 
+    geom_point(alpha = 0.5, color = "white") + 
     geom_smooth(method = "lm", col = "blue") +
     geom_smooth(col = "red") +
     xlab("Ponderação do Furto") +
@@ -1006,7 +1169,7 @@ df %>%
                     label = paste0("Corr: ", c_furto_2),
                     size = 4) -> g_furto_2
 
-grid.arrange(g_roubo_2, g_furto_2, ncol = 2)
+grid.arrange(g_roubo_1, g_roubo_2, ncol = 2)
 
 # As duas variáveis são correlacionadas, usaremos roubo como variável explicativa, ponderada pela população
 
@@ -1149,7 +1312,7 @@ modelo_4 <- lm(indiceEnvelhecimento ~ logPopulacao +
                                     Oeste +
                                     Litoral +
                                     `Campos Gerais`,
-data = df)
+                                    data = df)
 
 # Comparações pelos critérios AIC e BIC
 AIC(modelo_1) > AIC(modelo_4)
@@ -1282,7 +1445,7 @@ df %>%
   arrange(match(row_names, cidades)) %>% 
   View(title = "Outliers")
 
-# 2. Gráficos da posição dos outliers em função das  Variáveis Explicativas
+# 2. Gráficos da posição dos outliers em função das Variáveis Explicativas
 
 
 for (c in cidades){
