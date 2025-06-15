@@ -1013,7 +1013,7 @@ grid.arrange(g_roubo_2, g_furto_2, ncol = 2)
 # Trasformação
 df %<>% mutate(roubo = ponderacao(roubo)) %>%
     select(-furto)
-
+View(df)
 
 #### 6) Seleção das variáveis explicativas ####
 
@@ -1046,7 +1046,15 @@ modelo_1 <- lm(indiceEnvelhecimento ~ logPopulacao +
                                     roubo +
                                     despesas + 
                                     graudeU +
-                                    internetFixa, data = df)
+                                    internetFixa +
+                                    Norte +
+                                    `Centro e Centro-Sul` +
+                                    Noroeste +
+                                    `Vales do Iguaçu` +
+                                    Oeste +
+                                    Litoral +
+                                    `Campos Gerais`,
+                                    data = df)
 summary(modelo_1)
 anova(modelo_1)
 car::Anova(modelo_1, type = "III")
@@ -1061,7 +1069,15 @@ modelo_2 <- lm(indiceEnvelhecimento ~ logPopulacao +
                                     energiaIndustria + 
                                     crescimento +
                                     roubo +
-                                    despesas, data = df)
+                                    despesas +
+                                    Norte +
+                                    `Centro e Centro-Sul` +
+                                    Noroeste +
+                                    `Vales do Iguaçu` +
+                                    Oeste +
+                                    Litoral +
+                                    `Campos Gerais`,
+                                    data = df)
 
 # Comparações pelos critérios AIC e BIC
 AIC(modelo_1) > AIC(modelo_2)
@@ -1088,7 +1104,15 @@ modelo_3 <- lm(indiceEnvelhecimento ~ logPopulacao +
                                     densidade +
                                     energiaIndustria + 
                                     crescimento +
-                                    roubo, data = df)
+                                    roubo+
+                                    Norte +
+                                    `Centro e Centro-Sul` +
+                                    Noroeste +
+                                    `Vales do Iguaçu` +
+                                    Oeste +
+                                    Litoral +
+                                    `Campos Gerais`,
+data = df)
 # Comparações pelos critérios AIC e BIC
 AIC(modelo_1) > AIC(modelo_3)
 AIC(modelo_2) > AIC(modelo_3)
@@ -1117,7 +1141,15 @@ modelo_4 <- lm(indiceEnvelhecimento ~ logPopulacao +
                                     densidade +
                                     energiaIndustria + 
                                     crescimento +
-                                    roubo, data = df)
+                                    roubo+
+                                    Norte +
+                                    `Centro e Centro-Sul` +
+                                    Noroeste +
+                                    `Vales do Iguaçu` +
+                                    Oeste +
+                                    Litoral +
+                                    `Campos Gerais`,
+data = df)
 
 # Comparações pelos critérios AIC e BIC
 AIC(modelo_1) > AIC(modelo_4)
