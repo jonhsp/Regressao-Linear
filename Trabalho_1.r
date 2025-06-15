@@ -156,13 +156,50 @@ dfs <- list(df_IndiceEnvelhecimento,
 df <- Reduce(function(x, y) merge(x, y, by = c("municipio", "regiao")), dfs)
 #### 3) trasformações #### 
 
+# 3.1 ) Categorização das cidades dde acordo com a região
+
+# Criar vetores
+rgi <- c(
+  "Londrina", "Apucarana", "Cornélio Procópio - Bandeirantes", "Santo Antônio da Platina","Ibaiti",
+  "Maringá", "Paranavaí", "Cianorte", "Paranacity - Colorado", "Loanda", "Umuarama", 
+  "Cascavel",  "Toledo", "Marechal Cândido Rondon", "Foz do Iguaçu",
+  "Francisco Beltrão", "Dois Vizinhos", "Pato Branco",
+  "Guarapuava", "Irati", "Pitanga", "Laranjeiras do Sul - Quedas do Iguaçu", "Ivaiporã", 
+  "Campo Mourão", "União da Vitória",  "Ponta Grossa", "Telêmaco Borba",  "Curitiba",  "Paranaguá"
+)
+
+regiaoGeografica <- c(
+  rep("Norte", 5),
+  rep("Noroeste", 6),
+  rep("Oeste", 4),
+  rep("Vales do Iguaçu", 3),
+  rep("Centro e Centro-Sul", 7),
+  rep("Campos Gerais", 2),
+  "Grande Curitiba",
+  "Litoral"
+)
+
+categorizacao <- data.frame(rgi, regiaoGeografica)
+
+
 df %<>%
     # Log da população
     mutate(logPopulacao = log(df_populacao$populacao)) %>%  
     relocate(logPopulacao, .after = 4) %>%
+    #Inclusão da Região Geográfica
+    mutate(regiaoTemp = gsub("RGI de ", "", df$regiao)) %>%
+    left_join(categorizacao, by = c("regiaoTemp" = "rgi")) %>%
+    relocate(regiaoGeografica, .after = 3) %>% 
+    select(-regiaoTemp) %>%
     # Transformação de múnicipio e região em nome das linhas
     unite("municipio_regiao", c("municipio", "regiao"), sep = "/") %>% 
     column_to_rownames("municipio_regiao")
+
+# variáveis dummy, para categorização
+regioesunicas <- unique(df$regiaoGeografica)[-2] # Exclui a Grande Curitiba, que será a referência
+for(i in regioesunicas){
+    df[[i]] <- ifelse(df$regiaoGeografica == i, 1, 0)
+}
 
 # Função para ponderação pela quantidade de habitantes
 ponderacao <- function(data){
@@ -1192,3 +1229,52 @@ for (var in variaveis) {
            col = "red", pch = 19)
   }
 }
+
+
+
+#### Anális dos Outliers ####
+
+# 1. top 10 outliers 
+# Nome das cidadades
+cidades <- names(sort(abs(residuos), decreasing = TRUE)[1:5])
+cidades <- "Maringá/RGI de Maringá"
+modelo_4$fitted.values["Maringá/RGI de Maringá"]
+
+# Tabela dos outliers
+df %>% 
+  rownames_to_column("row_names") %>% 
+  left_join(data.frame(row_names = row.names(df),
+                        fitted.values = modelo_4$fitted.values),
+            by = "row_names") %>% 
+  filter(row_names %in% cidades) %>% 
+  arrange(match(row_names, cidades)) %>% 
+  View(title = "Outliers")
+
+# 2. Gráficos da posição dos outliers em função das  Variáveis Explicativas
+
+
+for (c in cidades){
+
+    groups <- c()
+    x11()
+    for (i in names(df)[-1]) {
+
+        title <- paste0("Outlier: ", c)
+        grafic <- df %>% 
+            ggplot(aes(x = !!sym(i))) +
+            geom_density() +
+            geom_vline( xintercept = df[c, i], color = "red", linetype = "dashed") +
+            ggtitle(title)
+        groups <- append(groups, list(grafic))
+    }
+    
+
+    grid.arrange(grobs = groups, ncol = 4)
+
+}
+
+coefficients(modelo_4)
+-0.00333369 * 18551.3673
+-7.53927457 * 8.3087
+
+
