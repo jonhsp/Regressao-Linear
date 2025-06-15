@@ -9,6 +9,9 @@ library(car)
 library(magrittr)
 library(knitr)
 library(kableExtra)
+library(sf)
+library(geobr)
+library(viridis)
 
 ##### 1) Leitura dos dados #####
 
@@ -47,6 +50,29 @@ leitura <- function(path, names){
 # 1.1) Índice de envelecimento
 path <-  "https://gist.githubusercontent.com/jonhsp/1e3e549494bfa1efb8fa25467f5bc0c7/raw/c87f3d9cd017d68a1456e352216faa8a6f90492c/%25C3%258Dndice%2520de%2520Envelhecimento"
 df_IndiceEnvelhecimento <- leitura(path, c("municipio", "regiao", "indiceEnvelhecimento"))
+
+# Baixa todos os municípios do Brasil (pode demorar um pouco)
+mun_br <- read_municipality(year = 2022)
+
+# Filtra apenas os municípios do Paraná
+mun_pr <- mun_br %>% filter(abbrev_state == "PR")
+
+# Adiciona informações da base do IPARDES para os dados do geobr para montar o mapa
+mapa_dados <- mun_pr %<>%
+    left_join(df_IndiceEnvelhecimento, by = c("name_muni" = "municipio"))
+
+# Contorno do estado do PR
+estado_pr <- read_state(code_state = "PR", year = 2020)
+
+# Mapa coroplético do paraná sobre o indice de envelhecimento dos municipios
+ggplot(mapa_dados) +
+    geom_sf(aes(fill = indiceEnvelhecimento), color = NA) +
+    scale_fill_viridis(option = "magma", direction = -1, name = "Índice de\nEnvelhecimento") +
+    labs(title = "Índice de Envelhecimento dos Municípios do Paraná",
+         caption = "Fonte: IPARDES e geobr") +
+    theme_minimal() +
+    theme(legend.position = "right")+
+    geom_sf(data = estado_pr, fill = NA, color = "black", size = 0.5)
 
 # 1.2) População Estimada
 path <- "https://gist.githubusercontent.com/jonhsp/b2884ca9770d2cbbdecad217f19897f0/raw/c6f2b1665065190b03abd8ce86d41e3f0e92e414/Popula%25C3%25A7%25C3%25A3o%2520Estimada.txt"
