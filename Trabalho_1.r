@@ -1274,8 +1274,7 @@ modelo_3 <- lm(indiceEnvelhecimento ~ logPopulacao +
                                     `Vales do Iguaçu` +
                                     Oeste +
                                     Litoral +
-                                    `Campos Gerais`,
-data = df)
+                                    `Campos Gerais`, data = df)
 # Comparações pelos critérios AIC e BIC
 AIC(modelo_1) > AIC(modelo_3)
 AIC(modelo_2) > AIC(modelo_3)
@@ -1311,8 +1310,7 @@ modelo_4 <- lm(indiceEnvelhecimento ~ logPopulacao +
                                     `Vales do Iguaçu` +
                                     Oeste +
                                     Litoral +
-                                    `Campos Gerais`,
-                                    data = df)
+                                    `Campos Gerais`, data = df)
 
 # Comparações pelos critérios AIC e BIC
 AIC(modelo_1) > AIC(modelo_4)
@@ -1338,7 +1336,7 @@ anova(modelo_4)
 car::Anova(modelo_4, type = "III")
 
 anova(modelo_1, modelo_2, modelo_3, modelo_4)
-
+A <- df
 df%<>%
     select(indiceEnvelhecimento,
         logPopulacao,
@@ -1361,17 +1359,44 @@ corrplot(correlacoes, method = "circle")
 
 # 1. Resíduos Padronizados
 residuos <- rstandard(modelo_4)
+outliers <- which(abs(residuos) > 2)
 valores_ajustados <- fitted(modelo_4)
 
 # 2. Gráfico de Resíduos vs Ajustados
 x11("Resíduos vs Ajustados")
-plot(valores_ajustados, residuos, 
-     xlab = "Valores Ajustados", ylab = "Resíduos Padronizados",
-     main = "Resíduos vs Valores Ajustados")
-abline(h = 0, col = "red")
+# Criar um data frame com os dados
+residuos_df <- data.frame(
+  valores_ajustados = valores_ajustados,
+  residuos = residuos,
+  outlier = ifelse(seq_along(residuos) %in% outliers, "Sim", "Não")
+)
+
+# Criar o gráfico com ggplot2
+ggplot(residuos_df, aes(x = valores_ajustados, y = residuos, color = outlier)) +
+  geom_point(alpha = 0.7, size = 3) +
+  geom_hline(yintercept = 0, color = "red", linetype = "dashed", size = 0.7) +
+  scale_color_manual(values = c("Não" = "white", "Sim" = "red")) +
+  labs(x = "Valores Ajustados", 
+       y = "Resíduos", 
+       title = "Resíduos Padronizados vs Valores Ajustados",
+       color = "Outlier") +
+  theme_minimal() +
+  theme(
+    plot.background = element_rect(fill = "#1a1a1a", color = NA),
+    panel.background = element_rect(fill = "#1a1a1a", color = "#333333"),
+    panel.grid = element_line(color = "#333333"),
+    text = element_text(color = "white"),
+    plot.title = element_text(color = "white", size = 14, face = "bold"),
+    axis.text = element_text(color = "white"),
+    legend.background = element_rect(fill = "#1a1a1a"),
+    legend.key = element_rect(fill = "#1a1a1a"),
+    legend.text = element_text(color = "white"),
+    legend.title = element_text(color = "white")
+  ) -> Residuos_Ajustados
 
 # 3. Identificação de Pontos Influentes (Cook's Distance)
 cooksd <- cooks.distance(modelo_4)
+
 limiar_cook <- 4/(nrow(df) - length(coef(modelo_4)) - 1)
 
 x11("Distância de Cook")
@@ -1380,34 +1405,125 @@ plot(cooksd, pch = "*", cex = 2,
      ylab = "Distância de Cook", xlab = "Índice")
 abline(h = limiar_cook, col = "red")
 
-# 4. Outliers (resíduos padronizados > 2)
-outliers <- which(abs(residuos) > 2)
 
 # 5. Gráficos de Resíduos vs Variáveis Explicativas
 x11("Resíduos vs Variáveis Explicativas", width = 12, height = 8)
-par(mfrow = c(2, 4))
 
-variaveis <- c("logPopulacao", "matriculas", "profissionaisS",'densidade', 
+# Criar uma lista para armazenar os gráficos
+plot_list <- list()
+
+# Definir variáveis
+variaveis <- c("logPopulacao", "matriculas", "profissionaisS", 'densidade', 
                "energiaIndustria", "crescimento", "sexo", "roubo")
 
-for (var in variaveis) {
-  plot(df[[var]], residuos, 
-       xlab = var, ylab = "Resíduos Padronizados",
-       main = paste("Resíduos vs", var))
-  abline(h = 0, col = "red")
+# Criar cada gráfico
+for (i in seq_along(variaveis)) {
+  var <- variaveis[i]
+  df_plot <- data.frame(
+    x = df[[var]],
+    y = residuos,
+    is_outlier = ifelse(seq_along(residuos) %in% outliers, "Sim", "Não")
+  )
   
-  # Destacar outliers
-  if (length(outliers) > 0) {
-    points(df[[var]][outliers], residuos[outliers], 
-           col = "red", pch = 19)
-  }
+  p <- ggplot(df_plot, aes(x = x, y = y, color = is_outlier)) +
+    geom_point(alpha = 0.3, show.legend = FALSE) +  # Remover legenda
+    geom_hline(yintercept = 0, color = "red", linetype = "dashed") +
+    scale_color_manual(values = c("Não" = "white", "Sim" = "red")) +  # Manter cores
+    labs(
+      x = var,
+      y = "Resíduos Padronizados",
+      title = paste("Resíduos vs", var)
+    ) +
+    theme_minimal() +
+    theme(
+      plot.background = element_rect(fill = "#1a1a1a", color = NA),
+      panel.background = element_rect(fill = "#1a1a1a", color = "#333333"),
+      panel.grid = element_line(color = "#333333"),
+      text = element_text(color = "white"),
+      plot.title = element_text(color = "white", size = 12, face = "bold"),
+      axis.text = element_text(color = "white"),
+      # Remover elementos da legenda
+      legend.position = "none"
+    )
+  
+  plot_list[[i]] <- p
 }
+
+# Organizar os gráficos em uma grade
+grid.arrange(grobs = plot_list, ncol = 4)
 
 # 6. QQplot
 x11("QQPlot")
-qqPlot(modelo_4)
-qqPlot
+car::qqPlot(resid(modelo_4), 
+           ylab = "Resíduos Padronizados",
+           main = "QQ-Plot dos Resíduos")
 
+
+# 6. QQplot personalizado
+x11("QQPlot Personalizado")
+
+# Calcular manualmente os dados do QQ-plot
+residuos_pad <- resid(modelo_4)
+n <- length(residuos_pad)
+P <- ppoints(n)
+Q <- qnorm(P)
+residuos_ordenados <- sort(residuos_pad)
+
+# Criar o data frame com os pontos do QQ-plot
+qq_df <- data.frame(
+  x = Q,
+  y = residuos_ordenados
+)
+
+# Calcular a linha de referência (primeiro e terceiro quartis)
+y_quantiles <- quantile(qq_df$y, c(0.25, 0.75), na.rm = TRUE, names = FALSE)
+x_quantiles <- qnorm(c(0.25, 0.75))
+slope <- diff(y_quantiles)/diff(x_quantiles)
+intercept <- y_quantiles[1] - slope * x_quantiles[1]
+
+# Adicionar uma coluna de identificação de outliers no data frame
+qq_df$is_outlier <- FALSE
+qq_df$is_outlier[order(residuos_pad) %in% outliers] <- TRUE
+
+# Criar o gráfico com o tema personalizado
+ggplot(qq_df, aes(x = x, y = y, color = is_outlier, shape = is_outlier)) +
+  # Pontos
+  geom_point(size = 3, alpha = 0.7) +
+  # Linha de referência
+  geom_abline(slope = slope, intercept = intercept, 
+              color = "red", linetype = "dashed", show.legend = FALSE) +
+  # Escalas e temas
+  scale_color_manual(
+    name = "Outlier",
+    values = c("FALSE" = "white", "TRUE" = "red"),
+    labels = c("FALSE" = "Não", "TRUE" = "Sim")
+  ) +
+  scale_shape_manual(
+    name = "Outlier",
+    values = c("FALSE" = 19, "TRUE" = 1),  # 19 = ponto preenchido, 1 = círculo vazio
+    labels = c("FALSE" = "Não", "TRUE" = "Sim")
+  ) +
+  labs(
+    x = "Quantis Teóricos", 
+    y = "Resíduos Padronizados",
+    title = "QQ-Plot dos Resíduos"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.background = element_rect(fill = "#1a1a1a", color = NA),
+    panel.background = element_rect(fill = "#1a1a1a", color = "#333333"),
+    panel.grid = element_line(color = "#333333"),
+    text = element_text(color = "white"),
+    plot.title = element_text(color = "white", size = 14, face = "bold"),
+    axis.text = element_text(color = "white"),
+    axis.line = element_line(color = "white"),
+    legend.background = element_rect(fill = "#1a1a1a"),
+    legend.key = element_rect(fill = "#1a1a1a"),
+    legend.text = element_text(color = "white"),
+    legend.title = element_text(color = "white")
+  ) -> Residuos_QQ
+
+grid.arrange(Residuos_Ajustados, Residuos_QQ, ncol = 2)
 
 # 7. Gráficos de Valores Ajustados vs Variáveis Preditoras
 x11("Valores Ajustados vs Variáveis Preditoras", width = 12, height = 8)
@@ -1448,28 +1564,55 @@ df %>%
 # 2. Gráficos da posição dos outliers em função das Variáveis Explicativas
 
 
-for (c in cidades){
 
-    groups <- c()
-    x11()
-    for (i in names(df)[-1]) {
+c <- "Maringá/RGI de Maringá"
+groups <- list()
+x11("Análise de Outlier", width = 12, height = 8)
+titles <- c("População", "Proporção de Homens", "Matrículas", "Saúde", 
+           "Densidade Demográfica", "Energia Industrial", 
+           "Crescimento Geométrico", "Roubo")
 
-        title <- paste0("Outlier: ", c)
-        grafic <- df %>% 
-            ggplot(aes(x = !!sym(i))) +
-            geom_density() +
-            geom_vline( xintercept = df[c, i], color = "red", linetype = "dashed") +
-            ggtitle(title)
-        groups <- append(groups, list(grafic))
-    }
+# Obter os nomes das variáveis na ordem correta
+variaveis <- names(df)[-c(1,15:21)]
+
+# Garantir que temos o mesmo número de títulos e variáveis
+stopifnot(length(titles) == length(variaveis))
+
+for (i in seq_along(variaveis)) {
+    var <- variaveis[i]
+    title <- titles[i]
     
-
-    grid.arrange(grobs = groups, ncol = 4)
-
+    grafic <- df %>% 
+        ggplot(aes(x = !!sym(var))) +
+        geom_density(fill = "#333333", color = "white", alpha = 0.7) +
+        geom_vline(xintercept = df[c, var], color = "red", linetype = "dashed", size = 1) +
+        labs(
+            title = title,
+            x = var,
+            y = "Densidade"
+        ) +
+        theme_minimal() +
+        theme(
+            plot.background = element_rect(fill = "#1a1a1a", color = NA),
+            panel.background = element_rect(fill = "#1a1a1a", color = "#333333"),
+            panel.grid = element_line(color = "#333333"),
+            text = element_text(color = "white"),
+            plot.title = element_text(color = "white", size = 10, face = "bold"),
+            axis.text = element_text(color = "white"),
+            axis.line = element_line(color = "white")
+        )
+    
+    groups[[i]] <- grafic
 }
 
-coefficients(modelo_4)
--0.00333369 * 18551.3673
--7.53927457 * 8.3087
+# Organizar os gráficos em uma grade
+grid.arrange(grobs = groups, ncol = 4)
 
+
+coef <- coefficients(modelo_4)
+cidade <- df["Maringá/RGI de Maringá",]
+
+resultados <- coef * cidade
+
+View(resultados)
 
